@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FinPath 钱途 · 完整流程 Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5FBF8; --surface:#FFFFFF;
+    --surface-ai:#FFF3EE; --surface-user:#E9F7F1;
+    --text:#26211D; --text-soft:#8A8078; --text-faint:#B7AEA4;
+    --accent:#FF6A4D; --accent-dark:#E14B2E;
+    --mint:#12A594; --mint-soft:#CFF0E8; --mint-bright:#6EE7C8;
+    --amber:#FFB100; --amber-soft:#FFEBC2; --violet:#8B7FD1; --buffer:#E7DED3;
+    --gold:#F5B733; --gold-dark:#D9930C;
+    --border:#EDE6DC; --shadow:rgba(38,33,29,0.08);
+    --radius-lg:22px; --radius-md:16px; --radius-sm:12px;
+    --hero-bg:#123D34; --hero-bg2:#0C2B24;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:#EAEAE6; font-family:'Manrope', sans-serif; color:var(--text);
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    padding:32px 12px 60px; gap:22px;
+  }
+  h1,h2,h3{font-family:'Fredoka', sans-serif; font-weight:600; margin:0;}
+
+  .phone{
+    position:relative; width:414px; max-width:100%; height:896px;
+    background:var(--bg); border-radius:44px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.35), 0 0 0 10px #17151388;
+    overflow:hidden; container-type:inline-size; container-name:phone;
+  }
+  .phone::before{
+    content:''; position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:120px; height:26px; background:#17151388; border-radius:20px; z-index:50;
+  }
+  .page{position:absolute; inset:0; display:none; flex-direction:column;}
+  .page.active{display:flex;}
+
+  /* 需求1：所有滚动容器隐藏滚动条，但保留可滚动 */
+  .page-scroll{flex:1; overflow-y:auto; padding-bottom:100px; scrollbar-width:none; -ms-overflow-style:none;}
+  .page-scroll::-webkit-scrollbar{display:none; width:0; height:0;}
+
+  /* ================= 首页资金仪表盘 ================= */
+  #page-home{background:#F8FAF7;}
+  #page-home .page-scroll{padding-bottom:176px;}
+  .home-top{padding:62px 20px 14px;}
+  .home-top-row{display:flex; align-items:baseline; justify-content:space-between; gap:16px;}
+  .brand-lockup{display:flex; align-items:baseline; gap:7px; white-space:nowrap;}
+  .brand-en{font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:var(--text);}
+  .brand-cn{font-size:12px; font-weight:900; color:var(--mint);}
+  .home-brand-slogan{font-size:9.5px; color:var(--text-soft); font-weight:700; white-space:nowrap;}
+
+  .savings-panel{margin:0 20px; padding:16px; border-radius:8px; background:#173E36; color:#fff; box-shadow:0 14px 30px -22px rgba(23,62,54,.8);}
+  .savings-panel-top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .savings-period{font-size:11.5px; font-weight:800;}
+  .savings-streak{display:flex; align-items:center; gap:5px; color:#FFE0A1; font-size:9.5px; font-weight:800; white-space:nowrap;}
+  .savings-streak svg{width:14px; height:14px; color:var(--gold);}
+  .savings-main{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:14px;}
+  .hero-num{font-size:44px; font-weight:700; font-family:'Fredoka',sans-serif; line-height:1; font-variant-numeric:tabular-nums;}
+  .hero-num .cur{font-size:22px; font-weight:600; opacity:.72; margin-right:3px;}
+  .hero-subtext{font-size:10.5px; color:#A5D9CC; margin-top:8px; font-weight:700;}
+  .savings-ring{width:70px; height:70px; flex:none; position:relative;}
+  .savings-ring svg{width:100%; height:100%; display:block; transform:rotate(-90deg);}
+  .savings-ring-copy{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .savings-ring-copy b{font-family:'Fredoka',sans-serif; font-size:16px; line-height:1;}
+  .savings-ring-copy span{font-size:8.5px; color:rgba(255,255,255,.55); margin-top:3px;}
+  .savings-stats{display:grid; grid-template-columns:1fr 1fr; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12);}
+  .savings-stat{min-width:0;}
+  .savings-stat + .savings-stat{border-left:1px solid rgba(255,255,255,.12); padding-left:16px;}
+  .savings-stat span{display:block; font-size:9.5px; color:rgba(255,255,255,.5); font-weight:700;}
+  .savings-stat b{display:block; margin-top:3px; font-family:'Fredoka',sans-serif; font-size:16px; font-weight:600;}
+
+  .home-content{padding:20px 20px 0;}
+  .home-section-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:12px;}
+  .home-section-head h2{font-size:16px;}
+  .home-section-head span{font-size:10.5px; color:var(--text-faint); font-weight:700;}
+  .allocation-bar{height:10px; display:flex; overflow:hidden; border-radius:5px; background:var(--border); margin-bottom:8px;}
+  .allocation-segment{height:100%; min-width:2px;}
+  .allocation-grid{display:grid; grid-template-columns:1fr 1fr; column-gap:18px;}
+  .allocation-item{min-width:0; display:grid; grid-template-columns:7px 1fr auto; align-items:center; gap:7px; padding:9px 0; border-bottom:1px solid var(--border);}
+  .allocation-dot{width:7px; height:7px; border-radius:50%;}
+  .allocation-name{font-size:11.5px; color:var(--text-soft);}
+  .allocation-amount{font-size:11.5px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .allocation-item:last-child{grid-column:1/-1;}
+  .micro-slogan{margin-top:14px; font-size:10.5px; color:var(--mint); font-weight:800; text-align:center;}
+
+  .home-empty-state{display:none; flex-direction:column; padding:8px 20px 0;}
+  .empty-state-card{min-height:0; display:flex; flex-direction:column; align-items:center; padding:20px 20px 22px; background:#fff; border-radius:28px; box-shadow:0 14px 30px -24px rgba(38,33,29,.28); text-align:center;}
+  .empty-mascot-wrap{position:relative; width:156px; height:156px; display:flex; align-items:center; justify-content:center; margin:2px auto 18px; border:1px solid #F0ECE6; border-radius:50%; background:#fff; box-shadow:0 10px 24px -20px rgba(38,33,29,.28); overflow:hidden; cursor:pointer; touch-action:manipulation; user-select:none;}
+  .empty-mascot-wrap:focus-visible{outline:2px solid var(--accent); outline-offset:3px;}
+  .empty-mascot-wrap.waking{animation:mascotWakePulse .56s ease;}
+  .empty-mascot-wrap.talking{animation:mascotTalk .42s ease;}
+  .empty-mascot{position:relative; z-index:1; width:132px; height:140px; display:block; object-fit:contain; transition:opacity .18s ease, transform .18s ease; pointer-events:none;}
+  .empty-mascot-coins{position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; border-radius:inherit;}
+  .empty-coin{position:absolute; top:-12px; left:var(--x); width:8px; height:8px; border:1px solid rgba(217,147,12,.72); border-radius:50%; background:radial-gradient(circle at 35% 28%, #FFF8D8 0%, #F5B733 48%, #D9930C 100%); box-shadow:0 0 8px rgba(245,183,51,.55); animation:emptyCoinFall var(--duration) cubic-bezier(.25,.6,.35,1) var(--delay) forwards;}
+  @keyframes emptyCoinFall{
+    0%{transform:translate3d(0,-6px,0) rotate(0deg) scale(.65); opacity:0;}
+    12%{opacity:1;}
+    78%{opacity:.9;}
+    100%{transform:translate3d(var(--drift),166px,0) rotate(280deg) scale(1); opacity:0;}
+  }
+  .empty-mascot-wrap.waking .empty-mascot{opacity:0; transform:scale(.82) rotate(-5deg);}
+  .empty-mascot-wrap.woken .empty-mascot{animation:mascotAppear .34s cubic-bezier(.2,.8,.25,1) both;}
+  @keyframes mascotWakePulse{
+    0%{transform:scale(1); box-shadow:0 10px 24px -20px rgba(38,33,29,.28);}
+    42%{transform:scale(1.045); box-shadow:0 0 0 9px rgba(255,106,77,.09), 0 12px 28px -16px rgba(225,75,46,.35);}
+    100%{transform:scale(1); box-shadow:0 10px 24px -20px rgba(38,33,29,.28);}
+  }
+  @keyframes mascotAppear{
+    0%{opacity:0; transform:scale(.78) rotate(4deg);}
+    68%{opacity:1; transform:scale(1.08) rotate(-1deg);}
+    100%{opacity:1; transform:scale(1.04) rotate(0deg);}
+  }
+  @keyframes mascotTalk{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    35%{transform:translateY(-4px) rotate(-1.5deg);}
+    68%{transform:translateY(1px) rotate(1deg);}
+  }
+  .empty-state-title{font-size:24px; line-height:1.2; color:var(--text);}
+  .empty-state-copy{max-width:270px; margin:11px 0 0; color:var(--text-soft); font-size:13px; line-height:1.6; transition:opacity .16s ease, transform .16s ease;}
+  .empty-state-copy.changing{opacity:0; transform:translateY(4px);}
+  .empty-plan-btn{width:100%; min-height:54px; display:flex; align-items:center; justify-content:center; margin-top:14px; border:none; border-radius:999px; background:var(--accent); color:#fff; font-family:'Manrope',sans-serif; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 14px 22px -16px rgba(225,75,46,.72);}
+  .empty-plan-btn:active{transform:translateY(1px);}
+
+  .floating-chat-btn{position:absolute; left:20px; right:20px; bottom:94px; min-height:58px; display:grid; grid-template-columns:44px 1fr 18px; align-items:center; gap:10px; background:#26211D; color:#fff; border:none; border-radius:8px; padding:7px 13px 7px 8px; text-align:left; cursor:pointer; box-shadow:0 12px 24px -14px rgba(38,33,29,.72); font-family:'Manrope',sans-serif; z-index:9;}
+  .chat-mascot{width:44px; height:44px; display:block; object-fit:contain; border-radius:7px; background:#fff;}
+  .chat-cta-copy{min-width:0;}
+  .chat-cta-copy strong{display:block; font-size:13.5px; font-weight:800;}
+  .chat-cta-copy span{display:block; margin-top:2px; font-size:9.5px; color:rgba(255,255,255,.58); font-weight:700;}
+  .chat-cta-arrow{width:18px; height:18px; color:var(--mint-bright);}
+  .bottom-nav{position:absolute; left:0; right:0; bottom:0; display:flex; background:var(--surface); box-shadow:0 -4px 16px var(--shadow); padding:10px 8px 18px; z-index:10;}
+  .nav-item{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--text-faint); font-size:11px; font-weight:700; font-family:'Manrope',sans-serif; padding:4px 0;}
+  .nav-item.active{color:var(--accent);}
+  .nav-item svg{width:22px; height:22px;}
+
+  /* ================= 我的页面 ================= */
+  #page-mine .safe-top{height:54px; flex:none;}
+  #page-persona .safe-top{height:54px; flex:none;}
+  .screen-head{padding:6px 20px 4px;}
+  .section-title{font-size:20px;}
+  .section-sub{font-size:12.5px; color:var(--text-soft); margin-top:2px;}
+  .mine-content{padding:14px 20px 0;}
+  .profile-card{display:grid; grid-template-columns:42px 1fr; align-items:center; gap:12px; padding:0; margin-bottom:22px;}
+  .profile-avatar{width:42px; height:42px; border:none; cursor:pointer; border-radius:0; background:transparent; color:var(--hero-bg); display:flex; align-items:center; justify-content:center; flex:none; padding:0;}
+  .profile-avatar svg{width:36px; height:36px; display:block;}
+  .profile-main{min-width:0;}
+  .editable-field{border:none; background:transparent; color:var(--text); font-family:'Manrope',sans-serif; font-weight:800; border-radius:10px; padding:4px 7px; margin-left:-7px;}
+  .editable-field:focus{outline:2px solid var(--accent); outline-offset:1px; background:#FFF8F5;}
+  .profile-name{font-family:'Fredoka',sans-serif; font-size:18px; width:150px;}
+  .profile-sub{font-size:12px; color:var(--text-soft); margin-top:5px; line-height:1.55;}
+  .section-label{display:flex; align-items:center; justify-content:space-between; margin:0 0 10px;}
+  .section-label h3{font-size:14.5px; font-weight:800;}
+  .section-label .count{font-size:11.5px; color:var(--text-faint); font-weight:700;}
+  .section-tagline{font-size:11.5px; color:var(--text-soft); line-height:1.5; margin:-4px 0 11px;}
+
+  .heart-plans{display:flex; gap:10px; margin-bottom:24px;}
+  .heart-slot{flex:1; min-width:0; height:132px; border-radius:16px; padding:12px; display:flex; flex-direction:column; justify-content:space-between; position:relative;}
+  .heart-slot.filled{background:linear-gradient(180deg,#FFFFFF 0%,#FFFDF8 100%); box-shadow:0 8px 18px -12px var(--shadow); cursor:pointer;}
+  .heart-slot.empty{background:transparent; border:1.5px dashed var(--border); cursor:pointer; align-items:center; justify-content:center; color:var(--text-faint);}
+  .heart-slot.empty:hover{border-color:var(--accent); color:var(--accent-dark);}
+  .heart-slot .hs-head{min-height:38px;}
+  .heart-slot .hs-name{font-size:12.5px; font-weight:900; line-height:1.25; padding-right:16px;}
+  .heart-slot .hs-tag{display:inline-flex; align-self:flex-start; margin-top:5px; font-size:9.5px; font-weight:800; color:#8A6B1E; background:#FFF6D7; border-radius:999px; padding:3px 7px;}
+  .heart-slot .hs-saving{margin-top:4px;}
+  .heart-slot .hs-amt{font-family:'Fredoka',sans-serif; font-size:24px; font-weight:600; color:var(--mint); line-height:1;}
+  .heart-slot .hs-foot{display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding-top:8px; border-top:1px solid rgba(237,230,220,.8);}
+  .heart-slot .hs-rate{font-size:10.5px; color:var(--accent-dark); font-weight:900;}
+  .heart-slot .hs-date{font-size:10px; line-height:1.2; color:var(--text-faint); font-weight:700;}
+  .heart-slot .hs-close{position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:rgba(38,33,29,.06); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .empty-plus{font-size:22px; line-height:1; margin-bottom:2px;}
+  .empty-text{font-size:11px; font-weight:700; text-align:center;}
+
+  /* 需求2：理财画像卡片改为可点击跳转 */
+  .persona-card{
+    background:linear-gradient(135deg, #FFF3EE, #EAF7F1); border-radius:var(--radius-lg);
+    padding:18px; margin-bottom:24px; display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; cursor:pointer;
+    border:none; width:100%; text-align:left; font-family:'Manrope',sans-serif;
+  }
+  .persona-title{font-family:'Fredoka',sans-serif; font-weight:600; font-size:15.5px; margin-bottom:5px; color:var(--text);}
+  .persona-desc{font-size:12px; color:var(--text-soft); line-height:1.4; margin-bottom:9px;}
+  .persona-tags{display:flex; flex-direction:column; gap:8px;}
+  .persona-tag-row{display:flex; align-items:flex-start; gap:8px;}
+  .persona-tag-label{width:34px; flex:none; font-size:10.5px; font-weight:900; color:var(--text-faint); line-height:1.8;}
+  .persona-tag-list{display:flex; flex-wrap:wrap; gap:6px; flex:1;}
+  .persona-mini-tag{font-size:10.5px; font-weight:800; color:#725018; background:rgba(255,255,255,.66); border-radius:999px; padding:4px 8px;}
+  .persona-arrow{margin-left:auto; flex:none; color:var(--text-faint);}
+
+  .saving-calc-card{position:relative; overflow:hidden; background:linear-gradient(180deg,#FFFFFF 0%,#FFFCF3 100%); border-radius:var(--radius-lg); padding:20px; margin-bottom:8px; box-shadow:0 8px 20px -12px var(--shadow); transition:box-shadow .25s ease, transform .25s ease;}
+  .saving-calc-card.joy{box-shadow:0 14px 34px -16px rgba(217,147,12,.55), 0 0 0 1px rgba(245,183,51,.28); transform:translateY(-1px);}
+  .saving-calc-card::before{content:''; position:absolute; inset:0; background:radial-gradient(circle at 78% 14%, rgba(245,183,51,.18), transparent 32%); pointer-events:none;}
+  .gold-particles{position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1;}
+  .gold-particle{position:absolute; width:5px; height:5px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #FFF7D6 0%, var(--gold) 55%, var(--gold-dark) 100%); box-shadow:0 0 10px rgba(245,183,51,.42); opacity:0; animation:goldFloat 3.8s ease-in-out infinite;}
+  @keyframes goldFloat{
+    0%{transform:translate3d(0,18px,0) scale(.75); opacity:0;}
+    18%{opacity:.9;}
+    72%{opacity:.72;}
+    100%{transform:translate3d(10px,-34px,0) scale(1.08); opacity:0;}
+  }
+  .sc-input-row,.jars-row{position:relative; z-index:2;}
+  .sc-input-row{display:flex; align-items:center; gap:8px; margin-bottom:18px;}
+  .sc-input-row input{font-size:26px; font-weight:700; font-family:'Fredoka',sans-serif; border:none; border-bottom:2px solid var(--border); width:110px; text-align:center; color:var(--gold-dark); background:transparent;}
+  .sc-input-row span{font-size:14px; color:var(--text-soft); font-weight:700;}
+  .sc-input-row .sc-prefix{font-size:12px;}
+  .jars-row{display:flex; justify-content:space-between; align-items:flex-end; gap:8px;}
+  .jar-item{position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; border:none; background:transparent; padding:0; font-family:'Manrope',sans-serif;}
+  .jar-item svg{width:100%; max-width:74px; height:auto; transition:transform .22s ease;}
+  .jar-item:active svg{transform:scale(.96);}
+  .jar-item.burst svg{animation:jarWobble .55s ease;}
+  @keyframes jarWobble{
+    0%,100%{transform:rotate(0deg) translateY(0);}
+    25%{transform:rotate(-4deg) translateY(-2px);}
+    55%{transform:rotate(4deg) translateY(1px);}
+    78%{transform:rotate(-2deg) translateY(0);}
+  }
+  .coin-burst{position:absolute; left:50%; top:18px; width:0; height:0; pointer-events:none;}
+  .burst-coin{position:absolute; width:8px; height:8px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #FFF7D6, var(--gold) 58%, var(--gold-dark)); box-shadow:0 0 9px rgba(245,183,51,.55); animation:coinPop .82s ease-out forwards;}
+  @keyframes coinPop{
+    0%{transform:translate(-4px,16px) scale(.55); opacity:0;}
+    18%{opacity:1;}
+    70%{opacity:.95;}
+    100%{transform:translate(var(--dx), var(--dy)) scale(.9); opacity:0;}
+  }
+  .jar-cute-note{position:absolute; left:50%; top:-2px; transform:translateX(-50%); white-space:nowrap; font-size:11px; font-weight:900; color:#9A6800; background:#FFF6D7; border:1px solid rgba(245,183,51,.42); border-radius:999px; padding:4px 8px; box-shadow:0 8px 14px -10px rgba(217,147,12,.55); pointer-events:none; animation:cuteNote .9s ease-out forwards;}
+  @keyframes cuteNote{
+    0%{transform:translate(-50%,8px) scale(.82); opacity:0;}
+    18%{opacity:1;}
+    100%{transform:translate(-50%,-24px) scale(1); opacity:0;}
+  }
+  .coin-rain{position:absolute; inset:0; pointer-events:none; z-index:45; overflow:hidden;}
+  .rain-coin{position:absolute; top:-22px; width:7px; height:7px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #FFF7D6, var(--gold) 58%, var(--gold-dark)); box-shadow:0 0 8px rgba(245,183,51,.45); animation:coinRain 2.65s cubic-bezier(.25,.55,.35,1) forwards;}
+  @keyframes coinRain{
+    0%{transform:translate3d(0,0,0) rotate(0deg) scale(.75); opacity:0;}
+    10%{opacity:1;}
+    82%{opacity:.9;}
+    100%{transform:translate3d(var(--drift), 890px, 0) rotate(320deg) scale(1); opacity:0;}
+  }
+  .jar-milestone{font-size:11.5px; color:var(--text-faint); font-weight:700;}
+  .jar-amount{font-family:'Fredoka',sans-serif; font-weight:600; font-size:16px; color:var(--gold-dark); font-variant-numeric:tabular-nums;}
+
+  /* ================= 子页面通用（画像详情页复用） ================= */
+  .subpage-top{flex:none; display:flex; align-items:center; gap:10px; padding:8px 18px 14px;}
+  .subpage-title{font-size:16px;}
+  .icon-btn{width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface); border:none; cursor:pointer; box-shadow:0 2px 6px var(--shadow); flex:none;}
+
+  /* 需求2：独立理财画像页 */
+  .persona-hero{background:linear-gradient(135deg,#FFF3EE,#EAF7F1); border-radius:var(--radius-lg); padding:24px 20px; text-align:left; margin:0 20px 18px;}
+  .persona-hero .brand-eyebrow{font-size:11px; color:var(--accent-dark); font-weight:900; margin-bottom:8px;}
+  .persona-hero h2{font-size:19px; margin-bottom:6px;}
+  .persona-hero .p-updated{font-size:11.5px; color:var(--text-faint); margin-bottom:10px;}
+  .persona-hero .p-context{font-size:12.5px; color:var(--text-soft); background:rgba(255,255,255,.6); display:inline-block; padding:5px 12px; border-radius:999px;}
+  .persona-summary{font-size:12.5px; color:var(--text-soft); line-height:1.65; margin-top:12px;}
+
+  .persona-section{padding:0 20px; margin-bottom:20px;}
+  .persona-section h4{font-size:13px; font-weight:800; color:var(--text-faint); margin-bottom:10px; letter-spacing:.02em;}
+  .persona-tags-lg{display:flex; flex-wrap:wrap; gap:8px;}
+  .persona-tag-lg{font-size:12.5px; font-weight:700; color:var(--text-soft); background:var(--surface); padding:7px 13px; border-radius:999px; box-shadow:0 4px 10px -6px var(--shadow);}
+
+  .dim-row{margin-bottom:14px;}
+  .dim-row .dim-label{display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:6px;}
+  .dim-row .dim-name{color:var(--text-soft); font-weight:600;}
+  .dim-row .dim-value{color:var(--text); font-weight:700;}
+  .dim-track{height:8px; background:var(--border); border-radius:999px; overflow:hidden;}
+  .dim-fill{height:100%; background:linear-gradient(90deg, var(--mint), var(--mint-bright)); border-radius:999px; transition:width .5s ease;}
+  .persona-info-card{background:var(--surface); border-radius:var(--radius-md); padding:15px 16px; box-shadow:0 7px 18px -13px var(--shadow); margin-bottom:10px;}
+  .persona-info-card strong{display:block; font-size:13px; margin-bottom:5px;}
+  .persona-info-card p{margin:0; font-size:12px; color:var(--text-soft); line-height:1.65;}
+
+  .care-tip{display:flex; gap:10px; align-items:flex-start; background:#FFF7E8; border-radius:14px; padding:14px 16px; margin:0 20px 20px;}
+  .care-tip p{margin:0; font-size:12px; color:#8A6B1E; line-height:1.6;}
+
+  .retake-btn{
+    margin:0 20px 24px; display:block; width:calc(100% - 40px); background:var(--surface);
+    border:1.5px solid var(--border); border-radius:999px; padding:13px; font-size:13.5px; font-weight:700;
+    color:var(--text-soft); cursor:pointer; font-family:'Manrope',sans-serif;
+  }
+  .retake-btn:hover{border-color:var(--accent); color:var(--accent-dark);}
+
+  /* ================= 小理对话页（迁自 client） ================= */
+  #page-chat{background:var(--bg);}
+  #page-chat .safe-top{height:54px; flex:none;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--surface); border:none; cursor:pointer;
+    box-shadow:0 2px 6px var(--shadow); font-size:16px; color:var(--text); flex:none;
+  }
+  .chat-top{flex:none; display:flex; align-items:center; gap:10px; padding:8px 18px 14px;}
+  .chat-top h3{margin:0; font-size:16px; font-weight:700;}
+  .chat-top .sub{font-size:11.5px; color:var(--text-soft); font-weight:500;}
+  .chat-mascot-top{
+    width:52px; height:52px; flex:none; object-fit:contain; object-position:center;
+    border-radius:14px; background:radial-gradient(circle at 50% 40%, #F4FCFA 0%, #E7F6F1 100%);
+    padding:1px; box-sizing:border-box;
+  }
+  .chat-mascot-top.is-thinking{animation:mascot-bob 1.2s ease-in-out infinite;}
+  @keyframes mascot-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}
+
+  .history-backdrop{
+    position:absolute; inset:0; background:rgba(38,33,29,.15);
+    z-index:220; display:none; opacity:0; transition:opacity .25s ease;
+  }
+  .history-backdrop.show{display:block; opacity:1;}
+  .history-panel{
+    position:absolute; top:0; right:0; bottom:0; width:66.67%;
+    background:var(--surface); z-index:230; display:flex; flex-direction:column;
+    transform:translateX(100%); transition:transform .3s cubic-bezier(.22,.61,.36,1);
+    box-shadow:-8px 0 30px -12px rgba(38,33,29,.15);
+  }
+  .history-panel.open{transform:translateX(0);}
+  .history-head{
+    flex:none; display:flex; align-items:center; justify-content:space-between;
+    padding:54px 16px 12px; border-bottom:1px solid var(--border);
+  }
+  .history-head h3{margin:0; font-size:16px; font-weight:700;}
+  .history-list{flex:1; overflow-y:auto; padding:8px 16px; scrollbar-width:none;}
+  .history-list::-webkit-scrollbar{display:none;}
+  .history-empty{text-align:center; padding:32px 16px; font-size:13px; color:var(--text-faint);}
+  .history-item{
+    padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .hi-row-top{display:flex; align-items:center; justify-content:space-between;}
+  .hi-delete-btn{
+    width:26px; height:26px; border-radius:50%; border:none; background:transparent;
+    cursor:pointer; color:var(--text-faint); display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .history-item .hi-date{font-size:11.5px; color:var(--text-faint); font-weight:600;}
+  .history-item .hi-title{font-size:14px; font-weight:700; color:var(--text);}
+  .history-item .hi-meta{font-size:12px; color:var(--text-soft); display:flex; gap:12px;}
+  .history-item .hi-badge{font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; display:inline-block;}
+  .hi-badge.confirmed{background:var(--mint-soft); color:var(--mint);}
+  .hi-badge.draft{background:var(--amber-soft); color:#725018;}
+
+  #page-chat .chat-scroll{
+    flex:1; overflow-y:auto; padding:6px 16px 14px;
+    display:flex; flex-direction:column; gap:14px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  #page-chat .chat-scroll::-webkit-scrollbar{display:none;}
+  .msg-row{display:flex; gap:8px; align-items:flex-end; max-width:100%;}
+  .msg-row.ai{align-items:flex-end; justify-content:flex-start;}
+  .msg-row.ai:has(.budget-card){width:100%; align-items:stretch;}
+  .msg-row.user{justify-content:flex-end;}
+  .msg-row.system{justify-content:center;}
+  .bubble{
+    max-width:76%; padding:12px 15px; border-radius:18px;
+    font-size:14px; line-height:1.55; word-break:break-word;
+  }
+  .msg-row.ai .bubble{background:var(--surface-ai); border-bottom-left-radius:6px;}
+  .msg-row.user .bubble{background:var(--surface-user); border-bottom-right-radius:6px;}
+  .msg-row.system .bubble{background:var(--amber-soft); color:var(--text-soft); font-size:12px; padding:8px 14px; border-radius:12px;}
+  .msg-row.error .bubble{background:#FFF0F0; color:var(--accent-dark); font-size:12px; padding:8px 14px; border-radius:12px;}
+
+  .typing-bubble{display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:12px 16px; min-width:120px;}
+  .typing-dots{display:flex; gap:4px;}
+  .typing-dots span{width:6px; height:6px; border-radius:50%; background:var(--text-faint); animation:bounce 1s infinite ease-in-out;}
+  .typing-dots span:nth-child(2){animation-delay:.15s;}
+  .typing-dots span:nth-child(3){animation-delay:.3s;}
+  .typing-status{font-size:12px; color:var(--text-faint); font-weight:500; line-height:1.3; transition:opacity .12s ease;}
+  .typing-status.is-swap{opacity:.35;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0); opacity:.5;}30%{transform:translateY(-5px); opacity:1;}}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; padding-left:0;}
+  .chip{
+    font-family:inherit; font-size:13px; font-weight:700;
+    background:var(--surface); border:1.5px solid var(--border);
+    padding:9px 14px; border-radius:999px; cursor:pointer;
+    transition:border-color .12s ease, transform .12s ease;
+  }
+  .chip:active{transform:scale(.96);}
+  .chip.confirm{background:var(--mint); color:#fff; border-color:var(--mint);}
+  .chip.adjust{color:var(--accent-dark); border-color:#FCD9CD;}
+  .chip:disabled{opacity:.5; pointer-events:none;}
+
+  .mode-cards{display:flex; flex-direction:column; gap:10px;}
+  .mode-card{
+    background:var(--surface); border:2px solid var(--border);
+    border-radius:var(--radius-md); padding:14px 16px; text-align:left;
+    cursor:pointer; display:flex; gap:12px; align-items:flex-start; font-family:inherit;
+  }
+  .mode-card .m-icon{width:36px; height:36px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .mode-card .m-title{font-weight:800; font-size:14.5px; margin-bottom:2px;}
+  .mode-card .m-desc{font-size:12.5px; color:var(--text-soft); line-height:1.5;}
+  .mode-card:active{transform:scale(.98);}
+  .mode-card:disabled{opacity:.5; pointer-events:none;}
+
+  .budget-card{
+    margin-left:0; width:100%; max-width:100%; background:var(--surface);
+    border-radius:var(--radius-lg); padding:16px 16px 14px;
+    box-shadow:0 8px 20px -12px var(--shadow); box-sizing:border-box;
+  }
+  .budget-card .bc-hero{display:flex; align-items:center; gap:14px; margin-bottom:14px;}
+  .budget-card .bc-hero-text{flex:1; min-width:0;}
+  .budget-card .bc-label{font-size:12px; color:var(--text-soft); font-weight:600; margin-bottom:2px;}
+  .budget-card .bc-saving{font-size:28px; font-weight:700; font-family:'Fredoka',sans-serif; color:var(--mint); font-variant-numeric:tabular-nums; line-height:1.15; margin-bottom:2px;}
+  .budget-card .bc-sub{font-size:12px; color:var(--text-soft); font-weight:500;}
+  .budget-card .bc-donut-box{width:96px; height:96px; flex:none;}
+  .budget-card .bc-donut-svg{transform:rotate(-90deg); display:block;}
+  .budget-card .bc-donut-svg circle{fill:none; stroke-width:16; stroke-linecap:round; transition:stroke-dasharray .55s ease, stroke-dashoffset .55s ease;}
+  .budget-card .bc-legend{display:flex; flex-direction:column; gap:6px; padding-top:2px; border-top:1px solid var(--border);}
+  .budget-card .bc-legend .legend-row{padding:4px 2px; font-size:12.5px;}
+  .budget-card .bc-total{font-size:12px; color:var(--text-faint); text-align:left; margin-top:10px; font-weight:500;}
+  .budget-card .bc-warning{margin-top:8px; padding:8px 10px; background:var(--amber-soft); border-radius:8px; font-size:11.5px; color:#725018; font-weight:700;}
+  .legend-row{display:flex; align-items:center; gap:8px; font-size:13px; border-radius:8px; padding:2px 4px; transition:background .5s ease;}
+  .legend-row.flash{background:var(--amber-soft);}
+  .legend-row .dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .legend-row .name{color:var(--text-soft); flex:1;}
+  .legend-row .amt-pct{font-size:11.5px; color:var(--text-faint); font-weight:600; min-width:30px; text-align:right;}
+  .legend-row .amt{font-weight:700; font-variant-numeric:tabular-nums;}
+  .donut-center-text{font-family:'Fredoka',sans-serif; font-weight:600; font-size:20px; fill:var(--mint); text-anchor:middle; dominant-baseline:central;}
+
+  .input-bar{
+    flex:none; display:flex; align-items:center; gap:10px;
+    padding:10px 14px calc(14px + env(safe-area-inset-bottom, 6px));
+    background:var(--bg); border-top:1px solid var(--border);
+  }
+  .input-bar input{
+    flex:1; border:none; background:var(--surface); border-radius:999px;
+    padding:12px 16px; font-size:14px; font-family:inherit; color:var(--text);
+    box-shadow:0 2px 6px var(--shadow); outline:none;
+  }
+  .input-bar input::placeholder{color:var(--text-faint);}
+  .send-btn{
+    width:42px; height:42px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--accent); display:flex; align-items:center; justify-content:center; flex:none; color:#fff;
+  }
+  .send-btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  /* ================= 确认成功页（迁自 client） ================= */
+  .confirm-success{
+    position:absolute; inset:0; background:var(--bg);
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    z-index:210; padding:40px 28px; text-align:center;
+    opacity:0; transition:opacity .3s ease;
+  }
+  .confirm-success.show{display:flex; opacity:1;}
+  .confirm-success .mascot-stage-lg{
+    width:160px; height:160px; margin:0 auto 12px; border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, #F4FCFA 0%, #E7F6F1 62%, #DDF1EB 100%);
+    display:flex; align-items:center; justify-content:center;
+    animation:mascot-pop .55s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .confirm-success .mascot-xl{width:148px; height:148px; display:block; object-fit:contain; margin:0;}
+  @keyframes mascot-pop{from{opacity:0; transform:scale(.86);} to{opacity:1; transform:scale(1);}}
+  .confirm-success .cs-big-amount{
+    font-size:42px; font-weight:800; font-family:'Fredoka',sans-serif;
+    color:var(--mint); margin-bottom:4px; font-variant-numeric:tabular-nums;
+  }
+  .confirm-success .cs-tagline{
+    font-size:18px; color:var(--text); font-weight:700; font-family:'Fredoka',sans-serif;
+    margin-bottom:6px; letter-spacing:.04em;
+  }
+  .confirm-success .cs-brand-sub{font-size:13px; color:var(--text-soft); font-weight:500; margin-bottom:8px;}
+  .confirm-success .cs-meta{font-size:12.5px; color:var(--text-faint); font-weight:500; margin-bottom:16px;}
+  .confirm-success .cs-summary{
+    background:var(--surface); border-radius:var(--radius-md); padding:12px 16px;
+    margin-bottom:24px; box-shadow:0 8px 20px -10px var(--shadow);
+    width:100%; display:flex; flex-direction:column; gap:2px;
+  }
+  .confirm-success .cs-row{display:flex; align-items:center; gap:10px; padding:8px 4px; font-size:13.5px;}
+  .confirm-success .cs-row .dot{width:8px; height:8px; border-radius:50%; flex:none;}
+  .confirm-success .cs-name{flex:1; color:var(--text-soft); font-weight:500; text-align:left;}
+  .confirm-success .cs-amt{font-weight:700; font-variant-numeric:tabular-nums; color:var(--text);}
+  .confirm-success .cs-actions{display:flex; flex-direction:column; gap:10px; width:100%;}
+  .cs-btn{
+    width:100%; font-family:inherit; font-weight:800; font-size:14px;
+    border:none; border-radius:999px; cursor:pointer; padding:14px 20px;
+    transition:transform .12s ease;
+  }
+  .cs-btn:active{transform:scale(.97);}
+  .cs-btn.ghost{background:transparent; color:var(--text-faint); font-size:13px;}
+
+  /* ================= 问卷测评页（需求4/5） ================= */
+  #page-survey{background:#F7F9F6;}
+  #page-survey .safe-top{height:48px; flex:none; background:var(--surface);}
+  .survey-top{height:48px; flex:none; padding:5px 20px; display:grid; grid-template-columns:32px 1fr auto; align-items:center; gap:10px; background:var(--surface);}
+  .survey-top.no-back{grid-template-columns:1fr auto;}
+  .survey-top.no-back .survey-back{display:none;}
+  .survey-back{width:32px; height:32px; border-radius:8px; background:transparent; border:none; display:flex; align-items:center; justify-content:center; color:var(--text-soft); cursor:pointer;}
+  .survey-brand-mini{font-family:'Fredoka',sans-serif; font-size:22px; font-weight:700; color:var(--text);}
+  .survey-brand-mini span{margin-left:5px; font-family:'Manrope',sans-serif; font-size:12px; color:var(--mint); font-weight:900;}
+  .survey-skip{border:none; background:transparent; color:var(--text-soft); padding:7px 0 7px 8px; font-size:10.5px; font-weight:800; cursor:pointer; font-family:'Manrope',sans-serif;}
+  .survey-progress-wrap{flex:none; padding:9px 20px 0; background:var(--surface);}
+  .survey-progress-copy{display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; color:var(--text-faint); font-size:9.5px; font-weight:800;}
+  .survey-progress-copy b{color:var(--mint); font-family:'Fredoka',sans-serif; font-size:10.5px;}
+  .survey-dots{display:flex; gap:4px; padding-bottom:12px;}
+  .survey-dot{flex:1; height:4px; border-radius:2px; background:var(--border);}
+  .survey-dot.done,.survey-dot.current{background:var(--mint);}
+
+  .survey-body{flex:1; display:flex; flex-direction:column; justify-content:flex-start; padding:20px 22px 32px; overflow-y:auto; scrollbar-width:none;}
+  .survey-body::-webkit-scrollbar{display:none;}
+  .survey-guide{display:grid; grid-template-columns:54px 1fr; align-items:center; gap:12px; padding:10px 12px; margin-bottom:24px; border-radius:8px; background:#E8F5F0;}
+  .survey-guide img{width:54px; height:54px; display:block; object-fit:contain; border-radius:7px; background:#fff;}
+  .survey-guide span{display:block; font-size:9.5px; color:var(--mint); font-weight:900;}
+  .survey-guide strong{display:block; margin-top:4px; font-size:12px; line-height:1.4;}
+  .survey-eyebrow{font-size:10.5px; color:var(--mint); font-weight:900; margin-bottom:8px;}
+  .survey-question{font-size:22px; font-weight:600; font-family:'Fredoka',sans-serif; line-height:1.38; margin-bottom:22px; letter-spacing:0;}
+  .survey-options{display:flex; flex-direction:column; gap:9px;}
+  .survey-opt{
+    min-height:50px; display:grid; grid-template-columns:28px 1fr; align-items:center; gap:11px; text-align:left;
+    background:var(--surface); border:1.5px solid var(--border); border-radius:8px; padding:9px 12px;
+    font-size:13.5px; font-weight:700; color:var(--text); cursor:pointer; box-shadow:0 7px 16px -15px rgba(38,33,29,.4);
+    font-family:'Manrope',sans-serif; transition:border-color .12s ease, background .12s ease, transform .1s ease;
+  }
+  .survey-opt-mark{width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:7px; background:#F3F1EC; color:var(--text-soft); font-family:'Fredoka',sans-serif; font-size:11px; font-weight:700;}
+  .survey-opt:active{transform:scale(.98);}
+  .survey-opt.selected{border-color:var(--mint); background:#ECF8F4; color:#146C60;}
+  .survey-opt.selected .survey-opt-mark{background:var(--mint); color:#fff;}
+
+  .survey-loading{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;}
+  .survey-loading .sl-ring{width:52px; height:52px; border-radius:50%; border:4px solid var(--border); border-top-color:var(--mint); animation:spin 0.9s linear infinite;}
+  .survey-loading p{font-size:13.5px; color:var(--text-soft); font-weight:600;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .toast{position:fixed; left:50%; bottom:40px; transform:translate(-50%,20px); background:var(--text); color:#fff; font-size:13px; font-weight:600; padding:12px 20px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; z-index:999;}
+  .toast.show{opacity:1; transform:translate(-50%,0);}
+
+  /* ================= iPhone XR · 414px 字号系统 ================= */
+  @container phone (min-width:400px){
+    .brand-en{font-size:23px;}
+    .brand-cn{font-size:12.5px;}
+    .savings-period{font-size:12.5px;}
+    .savings-streak{font-size:10px;}
+    .hero-num{font-size:46px;}
+    .hero-num .cur{font-size:23px;}
+    .hero-subtext{font-size:11.5px;}
+    .savings-ring-copy b{font-size:17px;}
+    .savings-ring-copy span{font-size:9px;}
+    .savings-stat span{font-size:10.5px;}
+    .savings-stat b{font-size:17px;}
+    .home-section-head h2{font-size:17px;}
+    .home-section-head span{font-size:11.5px;}
+    .allocation-name,.allocation-amount{font-size:12.5px;}
+    .micro-slogan{font-size:11px;}
+    .empty-state-title{font-size:26px;}
+    .empty-state-copy{font-size:13.5px;}
+    .empty-plan-btn{font-size:17px;}
+    .chat-cta-copy strong{font-size:14.5px;}
+    .chat-cta-copy span{font-size:10.5px;}
+    .nav-item{font-size:12px;}
+
+    .profile-name{font-size:19px;}
+    .profile-sub{font-size:13px;}
+    .section-label h3{font-size:15.5px;}
+    .section-label .count{font-size:12px;}
+    .section-tagline{font-size:12.5px;}
+    .heart-slot .hs-name{font-size:13.5px;}
+    .heart-slot .hs-tag{font-size:10px;}
+    .heart-slot .hs-amt{font-size:25px;}
+    .heart-slot .hs-rate{font-size:11px;}
+    .heart-slot .hs-date{font-size:10.5px;}
+    .empty-text{font-size:12px;}
+    .persona-title{font-size:16.5px;}
+    .persona-desc{font-size:13px;}
+    .persona-tag-label{font-size:11px;}
+    .persona-mini-tag{font-size:11px;}
+    .sc-input-row input{font-size:27px;}
+    .sc-input-row span{font-size:14.5px;}
+    .sc-input-row .sc-prefix{font-size:13px;}
+    .jar-cute-note{font-size:11.5px;}
+    .jar-milestone{font-size:12px;}
+    .jar-amount{font-size:17px;}
+
+    .subpage-title{font-size:17px;}
+    .persona-hero .brand-eyebrow{font-size:11.5px;}
+    .persona-hero h2{font-size:20px;}
+    .persona-hero .p-updated{font-size:12px;}
+    .persona-hero .p-context{font-size:13px;}
+    .persona-summary{font-size:13px;}
+    .persona-section h4{font-size:14px;}
+    .persona-tag-lg{font-size:13px;}
+    .dim-row .dim-label{font-size:13px;}
+    .persona-info-card strong{font-size:14px;}
+    .persona-info-card p,.care-tip p{font-size:13px;}
+    .retake-btn{font-size:14px;}
+
+    .chat-top h3{font-size:17px;}
+    .chat-top .sub{font-size:12.5px;}
+    .bubble{font-size:14.5px;}
+    .chip{font-size:13.5px;}
+    .budget-card .bc-saving{font-size:30px;}
+    .confirm-success .cs-big-amount{font-size:44px;}
+
+    .survey-brand-mini{font-size:23px;}
+    .survey-brand-mini span{font-size:12.5px;}
+    .survey-skip{font-size:11.5px;}
+    .survey-progress-copy{font-size:10.5px;}
+    .survey-progress-copy b{font-size:11.5px;}
+    .survey-guide span{font-size:10.5px;}
+    .survey-guide strong{font-size:13px;}
+    .survey-eyebrow{font-size:11.5px;}
+    .survey-question{font-size:23px;}
+    .survey-opt{font-size:14.5px;}
+    .survey-opt-mark{font-size:12px;}
+    .survey-loading p{font-size:14px;}
+    .toast{font-size:14px;}
+  }
+
+  /* 真实 iPhone XR 视口：移除桌面模拟外壳，使用系统安全区 */
+  @media (max-width:430px){
+    html,body{width:100%; min-height:100%; background:var(--bg);}
+    body{min-height:100vh; min-height:100dvh; padding:0; gap:0; align-items:stretch; overflow:hidden;}
+    .phone{width:100vw; height:100vh; height:100dvh; max-width:none; border-radius:0; box-shadow:none;}
+    .phone::before{display:none;}
+    .home-top{padding-top:calc(18px + env(safe-area-inset-top));}
+    #page-mine .safe-top,#page-persona .safe-top{height:calc(10px + env(safe-area-inset-top));}
+    #page-chat .safe-top,#page-survey .safe-top{height:calc(8px + env(safe-area-inset-top));}
+    .bottom-nav{padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+    .floating-chat-btn{bottom:calc(78px + env(safe-area-inset-bottom));}
+    .input-bar{padding-bottom:calc(12px + env(safe-area-inset-bottom));}
+    .toast{bottom:calc(18px + env(safe-area-inset-bottom));}
+  }
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ================= TAB 1 · 首页 ================= -->
+  <div class="page" id="page-home">
+    <div class="page-scroll">
+      <header class="home-top">
+        <div class="home-top-row">
+          <div class="brand-lockup"><span class="brand-en">FinPath</span><span class="brand-cn">钱途</span></div>
+          <div class="home-brand-slogan">钱途有理，前途有你</div>
+        </div>
+      </header>
+
+      <div id="home-planned-state">
+      <section class="savings-panel" aria-label="本月储蓄概览">
+        <div class="savings-panel-top">
+          <div class="savings-period">本月预计存下</div>
+          <div class="savings-streak">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18 12h3M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15a4 4 0 1 1 8 0v1H8v-1Z" fill="currentColor" opacity=".9"/></svg>
+            <span>连续达标 3 个月</span>
+          </div>
+        </div>
+        <div class="savings-main">
+          <div>
+            <div class="hero-num"><span class="cur">¥</span><span id="hero-num-val">850</span></div>
+            <div class="hero-subtext" id="hero-subtext">较上月多存 ¥120</div>
+          </div>
+          <div class="savings-ring" aria-label="储蓄率34%">
+            <svg viewBox="0 0 72 72" aria-hidden="true">
+              <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/>
+              <circle id="hero-ring-arc" cx="36" cy="36" r="28" fill="none" stroke="#74DFC3" stroke-width="7" stroke-linecap="round"/>
+            </svg>
+            <div class="savings-ring-copy"><b id="hero-ring-text">34%</b><span>储蓄率</span></div>
+          </div>
+        </div>
+        <div class="savings-stats">
+          <div class="savings-stat"><span>本月收入</span><b>¥2,500</b></div>
+          <div class="savings-stat"><span>可支配</span><b id="home-spendable">¥1,650</b></div>
+        </div>
+      </section>
+
+      <div class="home-content">
+        <div class="home-section-head"><h2>本月怎么分</h2><span>共 ¥2,500</span></div>
+        <div class="allocation-bar" id="allocation-bar" aria-label="本月资金分配比例"></div>
+        <div class="allocation-grid" id="home-legend"></div>
+        <div class="micro-slogan">你的每一块钱，都值得被认真对待</div>
+      </div>
+      </div>
+      <section class="home-empty-state" id="home-empty-state" aria-labelledby="empty-state-title">
+        <div class="empty-state-card">
+          <div class="empty-mascot-wrap" id="empty-mascot-trigger" role="button" tabindex="0" aria-label="拍一拍唤醒小理" aria-pressed="false">
+            <img class="empty-mascot" id="empty-mascot" src="assets/sleepy.png" alt="正在休息的小理">
+            <span class="empty-mascot-coins" id="empty-mascot-coins" aria-hidden="true"></span>
+          </div>
+          <h1 class="empty-state-title" id="empty-state-title">这个月还没安排</h1>
+          <p class="empty-state-copy" id="empty-state-copy" aria-live="polite">拍一拍唤醒小理，开始规划吧。</p>
+        </div>
+        <button class="empty-plan-btn" id="btn-start-plan" type="button">开始规划</button>
+      </section>
+    </div>
+    <button class="floating-chat-btn" id="btn-chat" aria-label="和小理聊聊，钱途不愁">
+      <img class="chat-mascot" src="assets/thinking.png" alt="">
+      <span class="chat-cta-copy"><strong>和小理聊聊</strong><span>钱途不愁</span></span>
+      <svg class="chat-cta-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="bottom-nav">
+      <button class="nav-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4l8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>首页
+      </button>
+      <button class="nav-item" data-page="mine">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>我的
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 独立页 · 小理对话（迁自 client） ================= -->
+  <div class="page" id="page-chat">
+    <div class="safe-top"></div>
+    <div class="chat-top">
+      <button class="icon-btn" id="btn-close-chat" type="button" aria-label="关闭对话">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div style="flex:1;">
+        <h3 id="chat-title">规划本月方案</h3>
+        <div class="sub">和小理聊聊，一起定下来</div>
+      </div>
+      <img class="chat-mascot-top" id="chat-mascot" src="assets/thinking.png" alt="小理" width="52" height="52">
+      <button class="icon-btn" id="btn-history" type="button" aria-label="历史对话" title="历史对话">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="chat-scroll" id="chat-scroll" role="log" aria-live="polite" aria-label="与小理的对话"></div>
+    <div class="history-panel" id="history-panel">
+      <div class="history-head">
+        <h3>历史对话</h3>
+        <button class="icon-btn" id="btn-close-history" type="button" aria-label="关闭历史">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">暂无历史对话</div>
+      </div>
+    </div>
+    <div class="history-backdrop" id="history-backdrop"></div>
+    <div class="input-bar">
+      <input id="chat-input" type="text" placeholder="跟小理说说就行" autocomplete="off">
+      <button class="send-btn" id="btn-send" type="button" aria-label="发送">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12l16-8-6 8 6 8-16-8z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 确认成功页（迁自 client） ================= -->
+  <div class="confirm-success" id="confirm-success">
+    <div class="mascot-stage-lg">
+      <img class="mascot-xl" src="assets/celebrating.png" alt="小理庆祝" width="148" height="148">
+    </div>
+    <div class="cs-big-amount" id="cs-saving-amount">¥0</div>
+    <div class="cs-tagline">方案定好了</div>
+    <div class="cs-brand-sub">这是你本月给未来的自己存的</div>
+    <div class="cs-meta" id="cs-meta">收入 ¥0 · 储蓄率 0%</div>
+    <div class="cs-summary" id="cs-summary-text"></div>
+    <div class="cs-actions">
+      <button class="cs-btn ghost" id="btn-back-home" type="button">回到首页</button>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2 · 我的 ================= -->
+  <div class="page" id="page-mine">
+    <div class="safe-top"></div>
+    <div class="page-scroll">
+      <div class="mine-content">
+        <div class="profile-card">
+          <button class="profile-avatar" id="profile-avatar" onclick="editAvatar()" aria-label="头像占位">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M5.5 20c1.1-4 3.7-6 6.5-6s5.4 2 6.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="profile-main">
+            <input class="editable-field profile-name" id="profile-name-input" value="晓萌" aria-label="昵称" maxlength="8" onchange="syncProfile()">
+            <div class="profile-sub">
+              <div>当前画像：<span id="profile-persona-name">稳健派储蓄新手</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label"><h3>心动方案</h3><span class="count" id="heart-count">2/3</span></div>
+        <div class="heart-plans" id="heart-plans"></div>
+
+        <!-- 需求2：点击跳转独立画像页；需求5：这里也能进入测评更新画像（通过画像页内的"重新测一测"按钮） -->
+        <div class="section-label"><h3>理财画像</h3></div>
+        <button class="persona-card" id="btn-open-persona">
+          <div>
+            <div class="persona-title" id="mine-persona-title">稳健派储蓄新手</div>
+            <div class="persona-desc" id="mine-persona-desc">关键词画像 · 点击查看详情</div>
+            <div class="persona-tags" id="mine-persona-tags">
+              <div class="persona-tag-row"><span class="persona-tag-label">消费</span><div class="persona-tag-list"><span class="persona-mini-tag">边界清晰</span><span class="persona-mini-tag">节奏稳定</span><span class="persona-mini-tag">轻量记录</span></div></div>
+              <div class="persona-tag-row"><span class="persona-tag-label">储蓄</span><div class="persona-tag-list"><span class="persona-mini-tag">先存后花</span><span class="persona-mini-tag">小金库优先</span><span class="persona-mini-tag">稳健方案</span><span class="persona-mini-tag">目标拆分</span></div></div>
+            </div>
+          </div>
+          <div class="persona-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </button>
+        <!-- 需求3：已删除"更多工具"整块 -->
+
+        <div class="section-label"><h3>小金库</h3></div>
+        <div class="section-tagline">从生活费到第一桶金，差一个开始</div>
+        <div class="saving-calc-card">
+          <div class="gold-particles" id="gold-particles" aria-hidden="true"></div>
+          <div class="sc-input-row">
+            <span class="sc-prefix">按本月储蓄</span>
+            <input id="jar-input" type="number" value="850" min="0" max="5000">
+            <span>¥/月 测算</span>
+          </div>
+          <div class="jars-row" id="jars-row"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-item" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4l8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>首页
+      </button>
+      <button class="nav-item active" data-page="mine">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>我的
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= 独立页 · 理财画像详情（需求2） ================= -->
+  <div class="page" id="page-persona">
+    <div class="safe-top"></div>
+    <div class="subpage-top">
+      <button class="icon-btn" id="btn-back-from-persona"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <h3 class="subpage-title">理财画像</h3>
+    </div>
+    <div class="page-scroll">
+      <div class="persona-hero">
+        <div class="brand-eyebrow">钱途，从较真开始</div>
+        <h2 id="persona-title-lg">稳健派储蓄新手</h2>
+        <div class="p-updated" id="persona-updated">8月更新 · 基于问卷测评生成</div>
+        <div class="p-context" id="persona-context">大二 · 校外租房 · 收入主要来自兼职/副业</div>
+        <div class="persona-summary" id="persona-summary">你适合先确定每月储蓄底线，再围绕餐饮、交通、娱乐做预算边界。遇到临时收入时，建议优先补强储蓄目标，再留一小部分作为奖励消费。</div>
+      </div>
+
+      <div class="persona-section">
+        <h4>特征标签</h4>
+        <div class="persona-tags-lg" id="persona-tags-lg"></div>
+      </div>
+
+      <div class="persona-section">
+        <h4>画像维度（客观描述，非评价）</h4>
+        <div class="dim-row">
+          <div class="dim-label"><span class="dim-name">消费稳定性</span><span class="dim-value" id="dim1-val">中等</span></div>
+          <div class="dim-track"><div class="dim-fill" id="dim1-fill" style="width:55%;"></div></div>
+        </div>
+        <div class="dim-row">
+          <div class="dim-label"><span class="dim-name">计划提前量</span><span class="dim-value" id="dim2-val">较高</span></div>
+          <div class="dim-track"><div class="dim-fill" id="dim2-fill" style="width:75%;"></div></div>
+        </div>
+        <div class="dim-row">
+          <div class="dim-label"><span class="dim-name">方案调整频率</span><span class="dim-value" id="dim3-val">较低</span></div>
+          <div class="dim-track"><div class="dim-fill" id="dim3-fill" style="width:30%;"></div></div>
+        </div>
+      </div>
+
+      <div class="persona-section">
+        <h4>预算策略</h4>
+        <div class="persona-info-card">
+          <strong>先存后花</strong>
+          <p>生活费或兼职到账后，先把固定储蓄转入小金库，剩余部分再拆给餐饮、交通和娱乐。</p>
+        </div>
+        <div class="persona-info-card">
+          <strong>弹性余量单独看</strong>
+          <p>不要把弹性余量当作可随便花的钱，它更适合覆盖聚餐、礼物、临时出行这类不稳定支出。</p>
+        </div>
+        <div class="persona-info-card">
+          <strong>心动方案做备选</strong>
+          <p>保存 2-3 个常用方案，比如开学季、考试周、兼职收入较多的月份，月底复用会更省心。</p>
+        </div>
+      </div>
+
+      <div class="persona-section">
+        <h4>适配建议</h4>
+        <div class="persona-info-card">
+          <strong>适合你的提醒方式</strong>
+          <p>用“区间提醒”比精确记账更轻松，比如餐饮接近 80% 时提醒一次，超过预算时再让 AI 帮你重排。</p>
+        </div>
+        <div class="persona-info-card">
+          <strong>本月最该关注</strong>
+          <p>如果娱乐或外卖突然增加，优先从弹性余量调整，不建议直接动用小金库里的储蓄目标。</p>
+        </div>
+      </div>
+
+      <!-- 若测评中透露分期/网贷情况，展示关怀提示，不做评价，只做资源引导 -->
+      <div class="care-tip" id="persona-care-tip" style="display:none;">
+        <p>如果最近在为分期或网贷发愁，随时可以找辅导员聊聊，也可以直接跟小理说说，一起看看怎么安排。</p>
+      </div>
+
+      <button class="retake-btn" id="btn-retake">重新测一测，更新画像</button>
+    </div>
+  </div>
+
+  <!-- ================= 问卷测评页（需求4/5） ================= -->
+  <div class="page" id="page-survey">
+    <div class="safe-top"></div>
+    <div class="survey-top">
+      <button class="survey-back" id="survey-back" style="visibility:hidden;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="survey-brand-mini">FinPath <span>钱途</span></div>
+      <button class="survey-skip" id="survey-skip">稍后再说</button>
+    </div>
+    <div class="survey-progress-wrap">
+      <div class="survey-progress-copy"><span>理财画像</span><b id="survey-progress-text">01 / 11</b></div>
+      <div class="survey-dots" id="survey-dots" role="progressbar" aria-label="问卷进度" aria-valuemin="1" aria-valuemax="11" aria-valuenow="1"></div>
+    </div>
+
+    <div class="survey-body" id="survey-body"></div>
+
+    <div class="survey-loading" id="survey-loading" style="display:none;">
+      <div class="sl-ring"></div>
+      <p id="survey-loading-text">正在为你生成理财画像…</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- 共享工具 ---------------- */
+function showToast(text){
+  const t = document.getElementById('toast');
+  t.textContent = text; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+function animateNumber(el, to){
+  const from = parseInt(el.dataset.val || '0', 10);
+  const start = performance.now(); const dur = 500;
+  function step(t){
+    const p = Math.min((t-start)/dur, 1);
+    const eased = 1-Math.pow(1-p,3);
+    const val = Math.round(from + (to-from)*eased);
+    el.textContent = val;
+    if(p<1) requestAnimationFrame(step); else el.dataset.val = to;
+  }
+  requestAnimationFrame(step);
+}
+function navigateTo(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', pageId==='page-'+n.dataset.page));
+  if(pageId==='page-mine') syncProfile();
+}
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>navigateTo('page-'+btn.dataset.page));
+});
+document.getElementById('btn-open-persona').addEventListener('click', ()=>navigateTo('page-persona'));
+document.getElementById('btn-back-from-persona').addEventListener('click', ()=>navigateTo('page-mine'));
+
+const userProfile = { name:'晓萌' };
+function syncProfile(){
+  const nameInput = document.getElementById('profile-name-input');
+  if(nameInput) userProfile.name = nameInput.value.trim() || '晓萌';
+}
+function editAvatar(){
+  showToast('头像编辑入口（demo）');
+}
+
+/* ================= 首页资金仪表盘 ================= */
+const CATS = ['food','transport','fun','saving','buffer'];
+const META = {
+  food:{label:'餐饮', color:'#FF6A4D'}, transport:{label:'交通', color:'#8B7FD1'},
+  fun:{label:'娱乐', color:'#FFB100'}, saving:{label:'储蓄', color:'#12A594'}, buffer:{label:'弹性余量', color:'#E7DED3'}
+};
+let income = 2500;
+let homePlanReady = false;
+let homeCats = null;
+function renderHomeState(){
+  const planned = document.getElementById('home-planned-state');
+  const empty = document.getElementById('home-empty-state');
+  const chatButton = document.getElementById('btn-chat');
+  if(planned) planned.style.display = homePlanReady ? 'block' : 'none';
+  if(empty) empty.style.display = homePlanReady ? 'none' : 'flex';
+  if(chatButton) chatButton.style.display = homePlanReady ? 'grid' : 'none';
+}
+function computeAllocation(rate, totalIncome){
+  const base = totalIncome || income;
+  const saving = Math.round(base*rate/100);
+  const remaining = base - saving;
+  const food = Math.round(remaining*0.53), transport = Math.round(remaining*0.09), fun = Math.round(remaining*0.09);
+  const buffer = remaining - food - transport - fun;
+  return {food, transport, fun, saving, buffer};
+}
+function renderHome(rateOrCats){
+  const cats = (rateOrCats && typeof rateOrCats === 'object')
+    ? rateOrCats
+    : computeAllocation(typeof rateOrCats === 'number' ? rateOrCats : 34, income);
+  homeCats = {...cats};
+  const total = CATS.reduce((s,k)=>s+(cats[k]||0), 0) || income;
+  income = total;
+  const legend = document.getElementById('home-legend');
+  const allocationBar = document.getElementById('allocation-bar');
+  legend.innerHTML = '';
+  allocationBar.innerHTML = '';
+  CATS.forEach(k=>{
+    const row = document.createElement('div'); row.className = 'allocation-item';
+    row.innerHTML = '<span class="allocation-dot" style="background:'+META[k].color+'"></span><span class="allocation-name">'+META[k].label+'</span><span class="allocation-amount">¥'+cats[k]+'</span>';
+    legend.appendChild(row);
+    const segment = document.createElement('span');
+    segment.className = 'allocation-segment';
+    segment.style.width = (cats[k]/total*100).toFixed(2)+'%';
+    segment.style.background = META[k].color;
+    allocationBar.appendChild(segment);
+  });
+  const saving = cats.saving || 0;
+  const rate = total > 0 ? Math.round(saving/total*100) : 0;
+  animateNumber(document.getElementById('hero-num-val'), saving);
+  document.getElementById('hero-subtext').textContent = '较上月多存 ¥120';
+  document.getElementById('home-spendable').textContent = '¥'+(total-saving).toLocaleString();
+  const incomeStat = document.querySelector('.savings-stat b');
+  if(incomeStat) incomeStat.textContent = '¥'+total.toLocaleString();
+  const headSpan = document.querySelector('.home-section-head span');
+  if(headSpan) headSpan.textContent = '共 ¥'+total.toLocaleString();
+  const R = 28, C = 2*Math.PI*R, len = (rate/100)*C;
+  const ring = document.getElementById('hero-ring-arc');
+  ring.style.strokeDasharray = C.toFixed(1);
+  ring.style.strokeDashoffset = (C-len).toFixed(1);
+  document.getElementById('hero-ring-text').textContent = rate+'%';
+  document.querySelector('.savings-ring').setAttribute('aria-label','储蓄率'+rate+'%');
+}
+renderHome(34);
+renderHomeState();
+
+/* ================= 小理对话流（迁自 client，离线 mock） ================= */
+let chatState = {
+  flow:'ASK_INCOME', // ASK_INCOME | ASK_MODE | ASK_SAVING | ADJUSTING | ASK_CONFIRM
+  income:0, mode:null, categories:null, cardEl:null,
+  isProcessing:false, pendingAdjust:null, inputPhase:'default', whyAsked:false
+};
+let adjustPlaceholderIndex = 0;
+const PLACEHOLDER_BY_PHASE = {
+  default:'跟小理说说就行', income:'也可以直接报个数，比如：2500',
+  mode:'也可以直接说你想怎么排', saving:'也可以直接说存多少，比如：800',
+  confirm:'也可以说：定了，或再改改'
+};
+const ADJUST_PLACEHOLDERS = [
+  '点上面改，或直接说想怎么调','也可以说：娱乐减100','也可以说：多存一点','改得差不多了可以说：就这样吧'
+];
+
+function scrollChatToBottom(){
+  const el = document.getElementById('chat-scroll');
+  requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; });
+}
+function setChatMascot(mood){
+  const el = document.getElementById('chat-mascot');
+  if(!el) return;
+  el.src = mood === 'happy' ? 'assets/happy.png' : 'assets/thinking.png';
+  el.classList.toggle('is-thinking', mood === 'thinking');
+}
+function setInputEnabled(enabled){
+  const input = document.getElementById('chat-input');
+  const btn = document.getElementById('btn-send');
+  if(input) input.disabled = !enabled;
+  if(btn) btn.disabled = !enabled;
+}
+function setChatPlaceholder(phase){
+  chatState.inputPhase = phase || 'default';
+  const input = document.getElementById('chat-input');
+  if(!input) return;
+  if(chatState.inputPhase === 'adjusting'){
+    input.placeholder = ADJUST_PLACEHOLDERS[adjustPlaceholderIndex % ADJUST_PLACEHOLDERS.length];
+    adjustPlaceholderIndex += 1; return;
+  }
+  input.placeholder = PLACEHOLDER_BY_PHASE[chatState.inputPhase] || PLACEHOLDER_BY_PHASE.default;
+}
+function focusChatInput(placeholder){
+  const input = document.getElementById('chat-input');
+  if(!input) return;
+  if(placeholder) input.placeholder = placeholder;
+  input.focus();
+}
+function addAIBubble(html){
+  const scroll = document.getElementById('chat-scroll');
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.innerHTML = '<div class="bubble">'+html+'</div>';
+  scroll.appendChild(row); setChatMascot('happy'); scrollChatToBottom();
+}
+function addUserBubble(text){
+  const scroll = document.getElementById('chat-scroll');
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = '<div class="bubble">'+text+'</div>';
+  scroll.appendChild(row); scrollChatToBottom();
+}
+function addErrorBubble(text){
+  const scroll = document.getElementById('chat-scroll');
+  const row = document.createElement('div');
+  row.className = 'msg-row error';
+  row.innerHTML = '<div class="bubble">⚠️ '+text+'</div>';
+  scroll.appendChild(row); scrollChatToBottom();
+}
+function addWarningBubble(text){
+  const scroll = document.getElementById('chat-scroll');
+  const row = document.createElement('div');
+  row.className = 'msg-row system';
+  row.innerHTML = '<div class="bubble">💡 '+text+'</div>';
+  scroll.appendChild(row); scrollChatToBottom();
+}
+function showTyping(hint){
+  const scroll = document.getElementById('chat-scroll');
+  const copy = hint === 'opening' ? '小理马上就来…'
+    : (hint === 'confirm' ? '正在帮你定下来…' : (chatState.categories ? '正在按你的意思改…' : '小理在听你说…'));
+  const row = document.createElement('div');
+  row.className = 'msg-row ai'; row.id = 'typing-indicator';
+  row.innerHTML = '<div class="bubble typing-bubble"><div class="typing-dots"><span></span><span></span><span></span></div><div class="typing-status">'+copy+'</div></div>';
+  scroll.appendChild(row); setChatMascot('thinking'); scrollChatToBottom();
+  return row;
+}
+function removeTyping(el){ if(el) el.remove(); }
+function clearActiveChips(){
+  const el = document.getElementById('active-chips');
+  if(el) el.remove();
+}
+function addChips(list){
+  clearActiveChips();
+  const scroll = document.getElementById('chat-scroll');
+  const wrap = document.createElement('div');
+  wrap.className = 'chips'; wrap.id = 'active-chips';
+  list.forEach(c=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip'+(c.cls ? ' '+c.cls : '');
+    btn.textContent = c.label;
+    btn.addEventListener('click', ()=>{
+      if(chatState.isProcessing) return;
+      clearActiveChips(); c.onClick();
+    });
+    wrap.appendChild(btn);
+  });
+  scroll.appendChild(wrap); scrollChatToBottom();
+}
+function animateMoney(el, to){
+  const from = parseInt(el.dataset.val || '0', 10);
+  const start = performance.now(), duration = 500;
+  function step(t){
+    const p = Math.min((t-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    const val = Math.round(from + (to-from)*eased);
+    el.textContent = '¥'+val.toLocaleString();
+    if(p < 1) requestAnimationFrame(step); else el.dataset.val = String(to);
+  }
+  requestAnimationFrame(step);
+  if(from !== to){
+    const row = el.closest('.legend-row');
+    if(row){ row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'), 650); }
+  }
+}
+function generatePlan(total, savingTarget){
+  const savingCap = Math.max(0, Math.min(Math.round(total*0.7), savingTarget != null ? savingTarget : Math.round(total*0.34)));
+  const remaining = total - savingCap;
+  const food = Math.round(remaining*0.53);
+  const transport = Math.round(remaining*0.09);
+  const fun = Math.round(remaining*0.09);
+  const buffer = remaining - food - transport - fun;
+  return {food, transport, fun, saving:savingCap, buffer};
+}
+function renderBudgetCard(){
+  if(!chatState.categories) return;
+  const scroll = document.getElementById('chat-scroll');
+  const R = 46, C = 2*Math.PI*R;
+  const total = chatState.income || 0;
+  const saving = chatState.categories.saving || 0;
+  const savingRate = total > 0 ? Math.round(saving/total*100) : 0;
+  if(!chatState.cardEl){
+    const row = document.createElement('div');
+    row.className = 'msg-row ai';
+    const legendHtml = CATS.map(k=>
+      '<div class="legend-row" id="row-'+k+'"><div class="dot" style="background:'+META[k].color+'"></div><div class="name">'+META[k].label+'</div><div class="amt-pct" id="pct-'+k+'">0%</div><div class="amt" id="amt-'+k+'">¥0</div></div>'
+    ).join('');
+    row.innerHTML =
+      '<div class="budget-card" id="the-card">'+
+        '<div class="bc-hero"><div class="bc-hero-text"><div class="bc-label">本月储蓄</div><div class="bc-saving" id="bc-saving-num">¥0</div><div class="bc-sub" id="bc-hero-sub">储蓄率 0%</div></div>'+
+        '<div class="bc-donut-box"><svg width="96" height="96" viewBox="0 0 120 120" class="bc-donut-svg" aria-hidden="true">'+
+          '<circle cx="60" cy="60" r="'+R+'" stroke="#EDE6DC" stroke-width="16" fill="none"/>'+
+          CATS.map(k=>'<circle id="donut-'+k+'" cx="60" cy="60" r="'+R+'" stroke="'+META[k].color+'" fill="none"/>').join('')+
+          '<text id="donut-income-text" x="60" y="60" class="donut-center-text" transform="rotate(90 60 60)">'+savingRate+'%</text>'+
+        '</svg></div></div>'+
+        '<div class="bc-legend">'+legendHtml+'</div>'+
+        '<div class="bc-total">本月可支配 ¥'+total.toLocaleString()+'</div>'+
+      '</div>';
+    scroll.appendChild(row);
+    chatState.cardEl = row;
+  }
+  let acc = 0;
+  CATS.forEach(k=>{
+    const val = chatState.categories[k];
+    const pct = total > 0 ? Math.round(val/total*100) : 0;
+    const len = total > 0 ? (val/total)*C : 0;
+    const circle = document.getElementById('donut-'+k);
+    if(circle){
+      circle.style.strokeDasharray = len.toFixed(1)+' '+(C-len).toFixed(1);
+      circle.style.strokeDashoffset = (-acc).toFixed(1);
+      acc += len;
+    }
+    const amtEl = document.getElementById('amt-'+k); if(amtEl) animateMoney(amtEl, val);
+    const pctEl = document.getElementById('pct-'+k); if(pctEl) pctEl.textContent = pct+'%';
+  });
+  const rate = total > 0 ? Math.round(saving/total*100) : 0;
+  const savingEl = document.getElementById('bc-saving-num'); if(savingEl) animateMoney(savingEl, saving);
+  const subEl = document.getElementById('bc-hero-sub'); if(subEl) subEl.textContent = '储蓄率 '+rate+'%';
+  const totalEl = chatState.cardEl.querySelector('.bc-total');
+  if(totalEl) totalEl.textContent = '本月可支配 ¥'+total.toLocaleString();
+  const centerText = document.getElementById('donut-income-text');
+  if(centerText) centerText.textContent = rate+'%';
+  scrollChatToBottom();
+}
+function showModeCards(){
+  chatState.flow = 'ASK_MODE';
+  setChatPlaceholder('mode');
+  clearActiveChips();
+  const scroll = document.getElementById('chat-scroll');
+  const wrap = document.createElement('div');
+  wrap.className = 'mode-cards'; wrap.id = 'active-chips';
+  const standard = document.createElement('button');
+  standard.type = 'button'; standard.className = 'mode-card';
+  standard.innerHTML = '<div class="m-icon" style="background:#FFEDE7;">📋</div><div><div class="m-title">帮我排一版</div><div class="m-desc">小理自动分，尽量多留结余</div></div>';
+  standard.addEventListener('click', ()=>{
+    if(chatState.isProcessing) return;
+    clearActiveChips(); addUserBubble('帮我排一版');
+    chatState.mode = 'standard';
+    mockReply('帮我排一版，你来自动分配');
+  });
+  const saving = document.createElement('button');
+  saving.type = 'button'; saving.className = 'mode-card';
+  saving.innerHTML = '<div class="m-icon" style="background:#DFF4EF;">🎯</div><div><div class="m-title">我想先定存多少</div><div class="m-desc">你先定存款，小理再压别的开支</div></div>';
+  saving.addEventListener('click', ()=>{
+    if(chatState.isProcessing) return;
+    clearActiveChips(); addUserBubble('我想先定存多少');
+    chatState.mode = 'target_first';
+    mockReply('我想先定存多少');
+  });
+  wrap.append(standard, saving); scroll.appendChild(wrap); scrollChatToBottom();
+}
+function showSavingsChips(){
+  chatState.flow = 'ASK_SAVING';
+  setChatPlaceholder('saving');
+  addChips([
+    {label:'少存一点', onClick:()=>{ addUserBubble('少存一点'); clearActiveChips(); addAIBubble('想存大概多少？打个数就行。'); focusChatInput('例如：400'); }},
+    {label:'存一半左右', onClick:()=>{
+      const half = chatState.income > 0 ? Math.round(chatState.income*0.5) : 0;
+      addUserBubble('存一半左右');
+      if(half > 0) mockReply('我想存'+half+'元');
+      else { clearActiveChips(); addAIBubble('一半大概多少？打个数我按这个排。'); focusChatInput('例如：1000'); }
+    }},
+    {label:'我自己说', onClick:()=>{ addUserBubble('我自己说存多少'); clearActiveChips(); addAIBubble('好，想存多少直接打个数。'); focusChatInput('例如：800'); }}
+  ]);
+}
+function beginAdjustPrompt(userLabel, pending, askText, placeholder){
+  chatState.pendingAdjust = pending;
+  addUserBubble(userLabel); clearActiveChips();
+  addAIBubble(askText); focusChatInput(placeholder);
+}
+function showAdjustChips(){
+  chatState.flow = 'ADJUSTING';
+  setChatPlaceholder('adjusting');
+  const chips = [
+    {label:'吃饭想宽一点', cls:'adjust', onClick:()=>beginAdjustPrompt('吃饭想宽一点',{category:'food',dir:'plus'},'想加多少？打个数就行。','例如：200')},
+    {label:'少玩一点', cls:'adjust', onClick:()=>beginAdjustPrompt('少玩一点',{category:'fun',dir:'minus'},'想少花多少？打个数就行，省下的先进弹性余量。','例如：100')},
+    {label:'想多存点', cls:'adjust', onClick:()=>beginAdjustPrompt('想多存点',{category:'saving',dir:'plus'},'想多存多少？打个数就行。','例如：150')}
+  ];
+  if(!chatState.whyAsked){
+    chips.push({label:'说说为啥', cls:'adjust', onClick:()=>{
+      chatState.pendingAdjust = null; chatState.whyAsked = true;
+      addUserBubble('说说为啥'); mockReply('说说为啥');
+    }});
+  }
+  chips.push(
+    {label:'我自己说', cls:'adjust', onClick:()=>{
+      chatState.pendingAdjust = null; addUserBubble('我自己说怎么改'); clearActiveChips();
+      addAIBubble('直接说就行，比如「餐饮加200」或「娱乐减100」。'); focusChatInput('例如：餐饮加200');
+    }},
+    {label:'就这样吧', cls:'confirm', onClick:()=>{ chatState.pendingAdjust = null; addUserBubble('就这样吧'); mockReply('就这样吧'); }}
+  );
+  addChips(chips);
+}
+function showConfirmChips(){
+  chatState.flow = 'ASK_CONFIRM';
+  setChatPlaceholder('confirm');
+  addChips([
+    {label:'定了', cls:'confirm', onClick:()=>{ addUserBubble('定了'); mockReply('定了'); }},
+    {label:'再改改', cls:'adjust', onClick:()=>{ addUserBubble('再改改'); mockReply('再改改'); }}
+  ]);
+}
+function extractIncome(text){
+  const nums = String(text).match(/\d{3,6}/g);
+  if(!nums) return 0;
+  return nums.map(n=>parseInt(n,10)).reduce((a,b)=>a+b,0);
+}
+function parseAdjust(text){
+  const t = String(text);
+  const map = [['餐饮','food'],['吃饭','food'],['外卖','food'],['交通','transport'],['娱乐','fun'],['玩','fun'],['储蓄','saving'],['存','saving'],['余量','buffer'],['弹性','buffer']];
+  let category = null;
+  for(const [word,key] of map){ if(t.includes(word)){ category = key; break; } }
+  const amountMatch = t.match(/(\d{2,5})/);
+  const amount = amountMatch ? parseInt(amountMatch[1],10) : 0;
+  if(!category || !amount) return null;
+  const dir = /减|少|砍/.test(t) ? 'minus' : 'plus';
+  const toSaving = /多存|存点|进储蓄/.test(t);
+  return {category, amount, dir, toSaving};
+}
+function applyAdjust(adj){
+  const cats = {...chatState.categories};
+  const donor = adj.dir === 'plus' ? 'buffer' : (adj.toSaving ? 'saving' : 'buffer');
+  if(adj.dir === 'plus'){
+    const move = Math.min(adj.amount, cats.buffer || 0);
+    if(move <= 0){ addWarningBubble('弹性余量不够加了，先减别处试试。'); return false; }
+    cats[adj.category] += move; cats.buffer -= move;
+  } else {
+    const move = Math.min(adj.amount, cats[adj.category] || 0);
+    if(move <= 0){ addWarningBubble('这一项已经很低了，换别处改吧。'); return false; }
+    cats[adj.category] -= move;
+    if(adj.toSaving || adj.category === 'saving'){ /* noop */ }
+    if(adj.category !== 'saving' && adj.toSaving) cats.saving += move;
+    else if(adj.category === 'saving') cats.buffer += move;
+    else cats.buffer += move;
+  }
+  chatState.categories = cats;
+  return true;
+}
+function showConfirmSuccess(){
+  const success = document.getElementById('confirm-success');
+  const saving = chatState.categories.saving || 0;
+  const rate = chatState.income > 0 ? Math.round(saving/chatState.income*100) : 0;
+  document.getElementById('cs-saving-amount').textContent = '¥'+saving.toLocaleString();
+  document.getElementById('cs-meta').textContent = '收入 ¥'+chatState.income.toLocaleString()+' · 储蓄率 '+rate+'%';
+  document.getElementById('cs-summary-text').innerHTML = CATS.map(k=>
+    '<div class="cs-row"><span class="dot" style="background:'+META[k].color+'"></span><span class="cs-name">'+META[k].label+'</span><span class="cs-amt">¥'+(chatState.categories[k]||0).toLocaleString()+'</span></div>'
+  ).join('');
+  const stage = success.querySelector('.mascot-stage-lg');
+  if(stage){ stage.style.animation = 'none'; void stage.offsetWidth; stage.style.animation = ''; }
+  income = chatState.income;
+  homeCats = {...chatState.categories};
+  homePlanReady = true;
+  renderHome(homeCats);
+  renderHomeState();
+  success.classList.add('show');
+}
+function closeSuccess(){
+  document.getElementById('confirm-success').classList.remove('show');
+  navigateTo('page-home');
+  showToast('本月方案已确认');
+}
+function mockReply(message){
+  if(chatState.isProcessing) return;
+  chatState.isProcessing = true;
+  setInputEnabled(false);
+  clearActiveChips();
+  const typingEl = showTyping(/定了|就这样|确认/.test(message) ? 'confirm' : null);
+  setTimeout(()=>{
+    removeTyping(typingEl);
+    const text = String(message || '');
+
+    if(chatState.flow === 'ASK_INCOME'){
+      const total = extractIncome(text);
+      if(!total){ addAIBubble('没听清金额呢。直接打个数就行，比如 2500。'); setInputEnabled(true); chatState.isProcessing = false; return; }
+      chatState.income = total;
+      addAIBubble('收到，这个月大概 ¥'+total.toLocaleString()+'。你想怎么排？');
+      chatState.isProcessing = false; setInputEnabled(true); showModeCards(); return;
+    }
+
+    if(chatState.flow === 'ASK_MODE'){
+      if(/先定存|存多少|目标/.test(text)){
+        chatState.mode = 'target_first';
+        addAIBubble('好，你想先存多少？打个数，或点下面快捷选项。');
+        chatState.isProcessing = false; setInputEnabled(true); showSavingsChips();
+      } else {
+        chatState.mode = 'standard';
+        chatState.categories = generatePlan(chatState.income);
+        chatState.whyAsked = false; chatState.cardEl = null;
+        addAIBubble('按「先留结余、再排必要开支」帮你排了一版，可以再微调。');
+        renderBudgetCard();
+        chatState.isProcessing = false; setInputEnabled(true); showAdjustChips();
+      }
+      return;
+    }
+
+    if(chatState.flow === 'ASK_SAVING'){
+      const target = extractIncome(text) || parseInt((text.match(/\d+/)||['0'])[0],10);
+      if(!target){ addAIBubble('想存多少直接打个数就行。'); chatState.isProcessing = false; setInputEnabled(true); return; }
+      chatState.categories = generatePlan(chatState.income, target);
+      chatState.whyAsked = false; chatState.cardEl = null;
+      addAIBubble('好，按先存 ¥'+target.toLocaleString()+' 排好了。哪里不顺手直接说。');
+      renderBudgetCard();
+      chatState.isProcessing = false; setInputEnabled(true); showAdjustChips();
+      return;
+    }
+
+    if(chatState.flow === 'ASK_CONFIRM'){
+      if(/再改|改改|调整/.test(text)){
+        addAIBubble('好，继续改。想动哪一块直接说。');
+        chatState.isProcessing = false; setInputEnabled(true); showAdjustChips();
+      } else {
+        addAIBubble('好，这版就定了～');
+        chatState.isProcessing = false; setInputEnabled(true); showConfirmSuccess();
+      }
+      return;
+    }
+
+    // ADJUSTING
+    if(/就这样|定了|确认|没问题|可以了/.test(text)){
+      addAIBubble('这版看起来挺稳。确认定下来吗？');
+      chatState.isProcessing = false; setInputEnabled(true); showConfirmChips(); return;
+    }
+    if(/说说为啥|为啥|为什么|怎么分/.test(text)){
+      chatState.whyAsked = true;
+      const c = chatState.categories;
+      addAIBubble('这版的逻辑是：先锁定储蓄 ¥'+(c.saving||0).toLocaleString()+'，餐饮 ¥'+(c.food||0).toLocaleString()+' 保证日常，交通和娱乐压到够用，剩下放进弹性余量防意外。');
+      chatState.isProcessing = false; setInputEnabled(true); showAdjustChips(); return;
+    }
+    const adj = parseAdjust(text);
+    if(adj && chatState.categories){
+      if(applyAdjust(adj)){
+        addAIBubble('改好了。'+META[adj.category].label+(adj.dir==='plus'?'加':'减')+adj.amount+'，你可以继续微调，或说「就这样吧」。');
+        renderBudgetCard();
+      }
+      chatState.isProcessing = false; setInputEnabled(true); showAdjustChips();
+    } else {
+      addAIBubble('可以这样说：「餐饮加200」「娱乐减100」「多存150」。也可以点上面的快捷按钮。');
+      chatState.isProcessing = false; setInputEnabled(true); showAdjustChips();
+    }
+  }, 520);
+}
+function resolvePendingAdjustMessage(rawText){
+  const pending = chatState.pendingAdjust;
+  if(!pending) return null;
+  const amount = parseInt(String(rawText).replace(/[^\d]/g,''),10);
+  if(!amount || amount <= 0) return null;
+  const label = META[pending.category] ? META[pending.category].label : pending.category;
+  let msg = pending.dir === 'minus' ? (label+'减'+amount) : (label+'加'+amount);
+  if(pending.dir === 'minus' && pending.category !== 'saving' && /存/.test(String(rawText))) msg += '，多存点储蓄';
+  chatState.pendingAdjust = null;
+  return msg;
+}
+function sendFreeText(){
+  if(chatState.isProcessing) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  const pendingMsg = resolvePendingAdjustMessage(text);
+  if(pendingMsg){ addUserBubble(text); clearActiveChips(); mockReply(pendingMsg); return; }
+  chatState.pendingAdjust = null;
+  addUserBubble(text); clearActiveChips(); mockReply(text);
+}
+function openChat(kind){
+  const scroll = document.getElementById('chat-scroll');
+  scroll.innerHTML = '';
+  chatState = {flow:'ASK_INCOME', income:0, mode:null, categories:null, cardEl:null, isProcessing:false, pendingAdjust:null, inputPhase:'default', whyAsked:false};
+  adjustPlaceholderIndex = 0;
+  setChatMascot('thinking');
+  setInputEnabled(false);
+  document.getElementById('confirm-success').classList.remove('show');
+  navigateTo('page-chat');
+  const typingEl = showTyping('opening');
+  setTimeout(()=>{
+    removeTyping(typingEl);
+    if(kind === 'adjust' && homePlanReady && homeCats){
+      document.getElementById('chat-title').textContent = '调整本月方案';
+      chatState.income = income;
+      chatState.categories = {...homeCats};
+      chatState.mode = 'standard';
+      chatState.flow = 'ADJUSTING';
+      addAIBubble('这是你现在这版。哪里不顺手直接说，我帮你改。');
+      renderBudgetCard(); showAdjustChips();
+    } else {
+      document.getElementById('chat-title').textContent = '规划本月方案';
+      addAIBubble('嗨，我是小理～这个月手头大概有多少钱可以花？随便说个数就行。');
+      setChatPlaceholder('income');
+      focusChatInput('例如：2500，或 生活费2000+兼职500');
+    }
+    setInputEnabled(true);
+  }, 380);
+}
+function closeChat(){
+  const hasUserMsg = !!document.querySelector('#chat-scroll .msg-row.user');
+  const hasDraft = !!(chatState.categories || chatState.income > 0 || hasUserMsg || chatState.isProcessing);
+  if(hasDraft && !document.getElementById('confirm-success').classList.contains('show')){
+    const msg = homePlanReady ? '确定退出吗？这次调整不会保存。' : '确定退出吗？当前方案不会保存。';
+    if(!confirm(msg)) return;
+  }
+  closeHistoryPanel();
+  navigateTo('page-home');
+}
+function openHistoryPanel(){
+  const listEl = document.getElementById('history-list');
+  if(homePlanReady && homeCats){
+    const now = new Date();
+    const dateStr = (now.getMonth()+1)+'/'+now.getDate()+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    listEl.innerHTML =
+      '<div class="history-item">'+
+        '<div class="hi-row-top"><span class="hi-date">'+dateStr+'</span><span class="hi-badge confirmed">已确认</span></div>'+
+        '<div class="hi-title">本月方案</div>'+
+        '<div class="hi-meta"><span>收入 ¥'+income.toLocaleString()+'</span><span>储蓄 ¥'+(homeCats.saving||0).toLocaleString()+'</span></div>'+
+      '</div>';
+  } else {
+    listEl.innerHTML = '<div class="history-empty">暂无历史对话</div>';
+  }
+  document.getElementById('history-panel').classList.add('open');
+  document.getElementById('history-backdrop').classList.add('show');
+}
+function closeHistoryPanel(){
+  document.getElementById('history-panel').classList.remove('open');
+  document.getElementById('history-backdrop').classList.remove('show');
+}
+
+document.getElementById('btn-send').addEventListener('click', sendFreeText);
+document.getElementById('chat-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); sendFreeText(); }
+});
+document.getElementById('btn-close-chat').addEventListener('click', closeChat);
+document.getElementById('btn-history').addEventListener('click', openHistoryPanel);
+document.getElementById('btn-close-history').addEventListener('click', closeHistoryPanel);
+document.getElementById('history-backdrop').addEventListener('click', closeHistoryPanel);
+document.getElementById('btn-back-home').addEventListener('click', closeSuccess);
+
+/* ================= 心动方案 ================= */
+let savedPlans = [
+  {id:1, name:'开学季', saving:900, savedAt:'7月保存', tag:'日常稳健', rate:36},
+  {id:2, name:'期末冲刺', saving:1200, savedAt:'6月保存', tag:'高储蓄', rate:48}
+];
+function renderHeartPlans(){
+  const wrap = document.getElementById('heart-plans'); wrap.innerHTML = '';
+  document.getElementById('heart-count').textContent = savedPlans.length+'/3';
+  for(let i=0;i<3;i++){
+    const plan = savedPlans[i]; const slot = document.createElement('div');
+    if(plan){
+      slot.className = 'heart-slot filled';
+      slot.innerHTML = '<div class="hs-close" data-id="'+plan.id+'"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#8A8078" stroke-width="2.4" stroke-linecap="round"/></svg></div>'+
+        '<div class="hs-head"><div class="hs-name">'+plan.name+'</div><div class="hs-tag">'+(plan.tag || '已收藏')+'</div></div>'+
+        '<div class="hs-saving"><div class="hs-amt">¥'+plan.saving+'</div></div>'+ 
+        '<div class="hs-foot"><span class="hs-rate">储蓄率 '+(plan.rate || Math.round(plan.saving/income*100))+'%</span><span class="hs-date">'+plan.savedAt+'</span></div>';
+      slot.addEventListener('click',(e)=>{ if(e.target.closest('.hs-close')) return; showToast('已切换到"'+plan.name+'"（demo演示）'); });
+      slot.querySelector('.hs-close').addEventListener('click', ()=>{ savedPlans = savedPlans.filter(p=>p.id!==plan.id); renderHeartPlans(); showToast('已从心动方案中移除'); });
+    } else {
+      slot.className = 'heart-slot empty';
+      slot.innerHTML = '<div class="empty-plus">+</div><div class="empty-text">保存当前方案</div>';
+      slot.addEventListener('click', ()=>{
+        if(savedPlans.length>=3){ showToast('最多只能保存3个心动方案'); return; }
+        savedPlans.push({id:Date.now(), name:'8月方案', saving:850, savedAt:'刚刚保存', tag:'当前方案', rate:34});
+        renderHeartPlans(); showToast('已保存为心动方案');
+      });
+    }
+    wrap.appendChild(slot);
+  }
+}
+renderHeartPlans();
+
+/* ================= 储蓄测算 · 金币罐 ================= */
+let jarTapCount = 0;
+let jarTapTimer = null;
+function jarSVG(pct, idPrefix){
+  const bodyY = 14, bodyH = 96, fillH = bodyH*pct, fillY = bodyY + (bodyH - fillH);
+  return '<svg viewBox="0 0 64 120"><defs><clipPath id="'+idPrefix+'-clip"><rect x="4" y="'+bodyY+'" width="56" height="'+bodyH+'" rx="16"/></clipPath>'+
+    '<linearGradient id="'+idPrefix+'-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFE9B0"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs>'+
+    '<rect x="14" y="2" width="36" height="14" rx="6" fill="#E7DED3"/>'+
+    '<rect x="4" y="'+bodyY+'" width="56" height="'+bodyH+'" rx="16" fill="#FBF8F4" stroke="#EDE6DC" stroke-width="2"/>'+
+    '<rect x="4" y="'+fillY.toFixed(1)+'" width="56" height="'+fillH.toFixed(1)+'" fill="url(#'+idPrefix+'-fill)" clip-path="url(#'+idPrefix+'-clip)"/>'+
+    (pct>0.05 ? '<circle cx="20" cy="'+fillY.toFixed(1)+'" r="4.5" fill="#FFE9B0" clip-path="url(#'+idPrefix+'-clip)"/><circle cx="38" cy="'+(fillY-3).toFixed(1)+'" r="4" fill="#FFF3D6" clip-path="url(#'+idPrefix+'-clip)"/>' : '')+
+    '</svg>';
+}
+function renderJars(monthly){
+  const milestones = [{label:'3个月', months:3, pct:0.25}, {label:'6个月', months:6, pct:0.5}, {label:'1年', months:12, pct:1}];
+  const row = document.getElementById('jars-row'); row.innerHTML = '';
+  milestones.forEach(m=>{
+    const item = document.createElement('button'); item.className = 'jar-item';
+    item.type = 'button';
+    item.setAttribute('aria-label', m.label + '小金库');
+    item.innerHTML = '<div class="coin-burst"></div>' + jarSVG(m.pct, 'jar'+m.months) + '<div class="jar-milestone">'+m.label+'</div><div class="jar-amount">¥'+(monthly*m.months).toLocaleString()+'</div>';
+    item.addEventListener('click', ()=>burstJarCoins(item));
+    row.appendChild(item);
+  });
+}
+function burstJarCoins(item){
+  registerJarTap(item);
+  item.classList.remove('burst');
+  void item.offsetWidth;
+  item.classList.add('burst');
+  const burst = item.querySelector('.coin-burst');
+  const coins = [
+    {dx:'-34px',dy:'-54px',d:0},{dx:'-18px',dy:'-70px',d:.04},{dx:'2px',dy:'-62px',d:.02},
+    {dx:'22px',dy:'-74px',d:.08},{dx:'36px',dy:'-48px',d:.12},{dx:'-4px',dy:'-86px',d:.15}
+  ];
+  burst.innerHTML = coins.map(c=>
+    '<span class="burst-coin" style="--dx:'+c.dx+'; --dy:'+c.dy+'; animation-delay:'+c.d+'s;"></span>'
+  ).join('');
+  setTimeout(()=>{ burst.innerHTML = ''; item.classList.remove('burst'); }, 980);
+}
+function registerJarTap(item){
+  jarTapCount += 1;
+  clearTimeout(jarTapTimer);
+  jarTapTimer = setTimeout(()=>{ jarTapCount = 0; }, 1200);
+
+  if(jarTapCount >= 2) showJarCuteNote(item, jarTapCount);
+  if(jarTapCount >= 3) triggerCoinRain();
+  if(jarTapCount >= 5){
+    const card = item.closest('.saving-calc-card');
+    if(card){
+      card.classList.add('joy');
+      setTimeout(()=>card.classList.remove('joy'), 900);
+    }
+    showToast('小金库开心到发光啦');
+    jarTapCount = 0;
+  }
+}
+function showJarCuteNote(item, count){
+  const words = ['叮咚 +1', '攒钱能量满格', '金币醒啦', '今天也在变富'];
+  const old = item.querySelector('.jar-cute-note');
+  if(old) old.remove();
+  const note = document.createElement('span');
+  note.className = 'jar-cute-note';
+  note.textContent = words[(count - 2) % words.length];
+  item.appendChild(note);
+  setTimeout(()=>note.remove(), 920);
+}
+function triggerCoinRain(){
+  const phone = document.querySelector('.phone');
+  if(!phone) return;
+  let rain = phone.querySelector('.coin-rain');
+  if(!rain){
+    rain = document.createElement('div');
+    rain.className = 'coin-rain';
+    phone.appendChild(rain);
+  }
+  const coins = Array.from({length:42}, (_, i)=>({
+    x: (i * 17 % 96) + 2,
+    d: (i % 9) * .085,
+    s: 5 + (i % 5),
+    drift: ((i % 7) - 3) * 14
+  }));
+  rain.innerHTML = coins.map(c=>
+    '<span class="rain-coin" style="left:'+c.x+'%; width:'+c.s+'px; height:'+c.s+'px; --drift:'+c.drift+'px; animation-delay:'+c.d+'s;"></span>'
+  ).join('');
+  setTimeout(()=>{ rain.innerHTML = ''; }, 3600);
+}
+function renderGoldParticles(){
+  const wrap = document.getElementById('gold-particles');
+  if(!wrap) return;
+  const particles = [
+    {x:12,y:76,s:4,d:0},{x:22,y:42,s:3,d:.8},{x:34,y:68,s:5,d:1.4},{x:46,y:28,s:3,d:.3},
+    {x:58,y:58,s:4,d:1.1},{x:70,y:34,s:5,d:.55},{x:82,y:72,s:3,d:1.8},{x:91,y:46,s:4,d:.95},
+    {x:16,y:20,s:3,d:2.1},{x:64,y:82,s:3,d:2.5},{x:78,y:18,s:4,d:1.65},{x:42,y:88,s:3,d:2.9}
+  ];
+  wrap.innerHTML = particles.map(p=>
+    '<span class="gold-particle" style="left:'+p.x+'%; top:'+p.y+'%; width:'+p.s+'px; height:'+p.s+'px; animation-delay:'+p.d+'s;"></span>'
+  ).join('');
+}
+document.getElementById('jar-input').addEventListener('input', function(){
+  renderJars(Math.max(0, parseInt(this.value,10)||0));
+  renderGoldParticles();
+});
+renderJars(850);
+renderGoldParticles();
+
+/* ================= 需求4/5：问卷测评 ================= */
+const SURVEY_QUESTIONS = [
+  {id:'grade', text:'你现在读几年级？', options:['大一','大二','大三','大四及以上']},
+  {id:'housing', text:'目前的住宿方式是？', options:['学校宿舍','校外租房']},
+  {id:'income_source', text:'这个月的收入主要来自？', options:['家里给的生活费','兼职/副业','奖学金/助学金','来源比较多样']},
+  {id:'income_range', text:'你每月大概可支配多少钱？', options:['1500以内','1500-2500','2500-4000','4000以上']},
+  {id:'fixed_cost', text:'每月有没有比较固定的大额支出？', options:['基本没有','房租/水电','通勤/交通','课程/考试/证书']},
+  {id:'saving_goal', text:'最近最想攒钱实现什么？', options:['旅行/演唱会','电子设备','应急备用金','暂时还没想好']},
+  {id:'spend_style', text:'花钱的时候，你更像是？', options:['先攒后花，习惯留一手','想花就花，月底再算','看心情，没太想过']},
+  {id:'tracking_style', text:'你能接受哪种记账方式？', options:['每天记一笔','按区间快速记录','只看每周总结','不想记账']},
+  {id:'trouble', text:'目前最大的理财困扰是？', options:['月月存不下钱','不知道钱花哪儿了','想存钱但没方法','暂时没什么困扰']},
+  {id:'risk_comfort', text:'面对钱的安排，你更偏好？', options:['稳一点，少折腾','能接受小波动','想多了解配置','先把钱管住就好']},
+  {id:'debt', text:'有没有还没还清的网贷或分期？', options:['没有','有一点，正在还','暂时不方便说']}
+];
+let surveyIndex = 0;
+let surveyAnswers = {};
+let surveySource = 'onboarding'; // 'onboarding' | 'retake'
+
+function startSurvey(source){
+  surveySource = source;
+  surveyIndex = 0; surveyAnswers = {};
+  document.getElementById('survey-skip').style.display = source==='onboarding' ? 'block' : 'none';
+  document.getElementById('survey-loading').style.display = 'none';
+  document.getElementById('survey-body').style.display = 'flex';
+  navigateTo('page-survey');
+  renderSurveyDots();
+  renderSurveyQuestion();
+}
+function renderSurveyDots(){
+  const dots = document.getElementById('survey-dots'); dots.innerHTML = '';
+  dots.setAttribute('aria-valuenow',surveyIndex+1);
+  document.getElementById('survey-progress-text').textContent = String(surveyIndex+1).padStart(2,'0')+' / '+SURVEY_QUESTIONS.length;
+  SURVEY_QUESTIONS.forEach((_, i)=>{
+    const d = document.createElement('div');
+    d.className = 'survey-dot' + (i < surveyIndex ? ' done' : (i===surveyIndex ? ' current' : ''));
+    dots.appendChild(d);
+  });
+}
+function renderSurveyQuestion(){
+  const q = SURVEY_QUESTIONS[surveyIndex];
+  const body = document.getElementById('survey-body');
+  const showBack = surveyIndex>0 || surveySource==='retake';
+  document.getElementById('survey-back').style.visibility = showBack ? 'visible' : 'hidden';
+  document.querySelector('.survey-top').classList.toggle('no-back',!showBack);
+  body.innerHTML =
+    '<div class="survey-guide"><img src="assets/thinking.png" alt=""><div><span>小理陪你一起开始</span><strong>不当月光族，从这一笔开始</strong></div></div>'+ 
+    '<div class="survey-eyebrow">问题 '+String(surveyIndex+1).padStart(2,'0')+'</div>'+ 
+    '<div class="survey-question">'+q.text+'</div>'+ 
+    '<div class="survey-options">'+
+      q.options.map((opt,i)=>'<button class="survey-opt" data-val="'+opt+'"><span class="survey-opt-mark">'+String.fromCharCode(65+i)+'</span><span>'+opt+'</span></button>').join('')+
+    '</div>';
+  body.querySelectorAll('.survey-opt').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      body.querySelectorAll('.survey-opt').forEach(b=>b.classList.remove('selected'));
+      this.classList.add('selected');
+      surveyAnswers[q.id] = this.dataset.val;
+      setTimeout(()=>{
+        if(surveyIndex < SURVEY_QUESTIONS.length - 1){
+          surveyIndex++; renderSurveyDots(); renderSurveyQuestion();
+        } else {
+          finishSurvey();
+        }
+      }, 280);
+    });
+  });
+}
+document.getElementById('survey-back').addEventListener('click', ()=>{
+  if(surveyIndex===0){ if(surveySource==='retake') navigateTo('page-persona'); return; }
+  surveyIndex--; renderSurveyDots(); renderSurveyQuestion();
+});
+document.getElementById('survey-skip').addEventListener('click', ()=>{
+  // 仅demo演示用：跳过测评直接进入首页，生产环境不会有这个按钮
+  navigateTo('page-home'); document.querySelector('.nav-item[data-page="home"]').classList.add('active');
+});
+
+function finishSurvey(){
+  document.getElementById('survey-body').style.display = 'none';
+  document.getElementById('survey-loading').style.display = 'flex';
+  document.getElementById('survey-loading-text').textContent = surveySource==='onboarding' ? '正在为你生成理财画像…' : '正在更新你的理财画像…';
+  setTimeout(()=>{
+    applyPersonaFromAnswers(surveyAnswers);
+    if(surveySource==='onboarding'){
+      showToast('欢迎来到钱途，你的画像已生成');
+      navigateTo('page-home'); document.querySelector('.nav-item[data-page="home"]').classList.add('active');
+    } else {
+      showToast('画像已更新');
+      navigateTo('page-persona');
+    }
+  }, 1100);
+}
+
+/* 根据问卷答案，生成/更新理财画像内容（demo演示逻辑，真实版本应由后端根据实际使用数据生成） */
+function applyPersonaFromAnswers(a){
+  let title = '稳健派储蓄新手';
+  if(a.spend_style === '先攒后花，习惯留一手') title = '稳健派储蓄达人';
+  else if(a.trouble === '月月存不下钱') title = '正在起步的存钱新手';
+  else if(a.spend_style === '想花就花，月底再算') title = '灵活型消费探索者';
+
+  const tags = [];
+  tags.push(a.housing === '校外租房' ? '租房独立生活' : '住校生活');
+  if(a.income_range) tags.push(a.income_range+'可支配');
+  if(a.fixed_cost && a.fixed_cost !== '基本没有') tags.push(a.fixed_cost+'固定支出');
+  if(a.spend_style === '想花就花，月底再算') tags.push('先消费后规划');
+  else if(a.spend_style === '先攒后花，习惯留一手') tags.push('储蓄优先型');
+  else tags.push('消费节奏灵活');
+  if(a.saving_goal && a.saving_goal !== '暂时还没想好') tags.push(a.saving_goal+'目标');
+  if(a.tracking_style === '按区间快速记录') tags.push('适合轻量记账');
+  else if(a.tracking_style === '只看每周总结') tags.push('适合周复盘');
+  else if(a.tracking_style === '不想记账') tags.push('适合自动提醒');
+  if(a.trouble === '月月存不下钱') tags.push('正在建立存钱习惯');
+  else if(a.trouble === '不知道钱花哪儿了') tags.push('消费记录待完善');
+  else if(a.trouble === '想存钱但没方法') tags.push('有存钱意愿');
+  else tags.push('财务状况平稳');
+  if(a.risk_comfort === '稳一点，少折腾') tags.push('稳健优先');
+  else if(a.risk_comfort === '能接受小波动') tags.push('可接受小波动');
+  else if(a.risk_comfort === '想多了解配置') tags.push('配置学习中');
+  tags.push(a.income_source || '收入来源多样');
+
+  const context = [a.grade, a.housing, a.income_range, '收入主要来自'+(a.income_source||'多渠道')].filter(Boolean).join(' · ');
+
+  // 首页/我的卡片同步
+  document.getElementById('mine-persona-title').textContent = title;
+  document.getElementById('profile-persona-name').textContent = title;
+  const descMap = {
+    '稳健派储蓄达人':'你已经有先存后花的意识，适合把月储蓄目标前置，再用弹性预算承接临时花销。',
+    '正在起步的存钱新手':'你最需要的是简单稳定的预算边界，先守住每月固定储蓄，再慢慢优化消费结构。',
+    '灵活型消费探索者':'你对消费更随性，适合用心动方案做预案，把娱乐和餐饮额度提前分清楚。',
+    '稳健派储蓄新手':'你更适合先锁定储蓄目标，再给餐饮和娱乐留出清晰边界。本月重点是保持储蓄节奏，不让临时消费挤占小金库。'
+  };
+  const goalText = a.saving_goal && a.saving_goal !== '暂时还没想好' ? ' 当前目标偏向「'+a.saving_goal+'」，适合把目标拆成每月固定小金库。' : '';
+  const fixedText = a.fixed_cost && a.fixed_cost !== '基本没有' ? ' 因为有「'+a.fixed_cost+'」这类固定支出，建议先预留刚性预算。' : '';
+  document.getElementById('mine-persona-desc').textContent = '关键词画像 · 点击查看详情';
+  const mineTags = document.getElementById('mine-persona-tags');
+  if(mineTags) mineTags.innerHTML = renderMinePersonaKeywords(a, title);
+
+  // 独立画像页同步
+  document.getElementById('persona-title-lg').textContent = title;
+  document.getElementById('persona-context').textContent = context;
+  document.getElementById('persona-updated').textContent = '8月更新 · 基于问卷测评生成';
+  document.getElementById('persona-summary').textContent = (descMap[title] || descMap['稳健派储蓄新手']) + goalText + fixedText;
+  const tagsWrap = document.getElementById('persona-tags-lg');
+  tagsWrap.innerHTML = tags.map(t=>'<span class="persona-tag-lg">'+t+'</span>').join('');
+
+  // 简单维度可视化联动（demo演示用，真实数据应来自使用记录）
+  const planAhead = a.spend_style === '先攒后花，习惯留一手' ? 82 : (a.spend_style==='想花就花，月底再算' ? 35 : 55);
+  document.getElementById('dim2-fill').style.width = planAhead+'%';
+  document.getElementById('dim2-val').textContent = planAhead>=65?'较高':(planAhead>=40?'中等':'较低');
+
+  // 网贷/分期关怀提示
+  document.getElementById('persona-care-tip').style.display = (a.debt && a.debt !== '没有') ? 'flex' : 'none';
+}
+
+function renderMinePersonaKeywords(a, title){
+  const consume = [];
+  consume.push(a.spend_style === '想花就花，月底再算' ? '先消费后规划' : (a.spend_style === '先攒后花，习惯留一手' ? '消费克制' : '节奏灵活'));
+  consume.push(a.fixed_cost && a.fixed_cost !== '基本没有' ? '有固定支出' : '刚性支出少');
+  if(a.income_range) consume.push(a.income_range);
+  consume.push(a.tracking_style === '按区间快速记录' ? '区间记账' : (a.tracking_style === '只看每周总结' ? '周复盘' : (a.tracking_style === '不想记账' ? '少打扰' : '每日记录')));
+
+  const saving = [];
+  saving.push(title.indexOf('达人') > -1 ? '储蓄达人' : (title.indexOf('新手') > -1 ? '储蓄起步' : '储蓄观察中'));
+  saving.push(a.risk_comfort === '稳一点，少折腾' ? '稳健优先' : (a.risk_comfort === '能接受小波动' ? '小波动可接受' : '先管住钱'));
+  saving.push('小金库优先');
+  saving.push(a.saving_goal && a.saving_goal !== '暂时还没想好' ? a.saving_goal : '目标待明确');
+
+  const rows = [
+    ['消费', consume.slice(0,4)],
+    ['储蓄', saving.slice(0,4)]
+  ];
+  return rows.map(row=>
+    '<div class="persona-tag-row"><span class="persona-tag-label">'+row[0]+'</span><div class="persona-tag-list">'+
+    row[1].map(t=>'<span class="persona-mini-tag">'+t+'</span>').join('')+
+    '</div></div>'
+  ).join('');
+}
+
+// 首次进入App：先展示问卷测评（需求4）
+startSurvey('onboarding');
+document.getElementById('btn-chat').addEventListener('click', ()=> openChat(homePlanReady ? 'adjust' : 'fresh'));
+document.getElementById('btn-start-plan').addEventListener('click', ()=> openChat('fresh'));
+
+let emptyMascotPressTimer = null;
+let emptyMascotTapTimer = null;
+let emptyMascotTypingTimer = null;
+let emptyMascotCoinTimer = null;
+let emptyMascotSpeakToken = 0;
+let emptyMascotLastPhrase = -1;
+let emptyMascotLongPressTriggered = false;
+let emptyMascotWoken = false;
+const EMPTY_MASCOT_PHRASES = [
+  '快去存一点吧，这是给未来的自己留条后路。',
+  '不用一次存很多呢，稳稳地来就好呀。',
+  '今天我们少花一点，明天的底气就多一点。',
+  '把方案定好了，心里会踏实很多呢。',
+  '就算是小小结余，慢慢积累，也能滚成大事呢。'
+];
+function wakeEmptyMascot(){
+  if(emptyMascotWoken) return;
+  emptyMascotWoken = true;
+  const trigger = document.getElementById('empty-mascot-trigger');
+  const mascot = document.getElementById('empty-mascot');
+  const copy = document.getElementById('empty-state-copy');
+  if(!trigger || !mascot) return;
+  trigger.classList.add('waking');
+  if(copy) copy.classList.add('changing');
+  setTimeout(()=>{
+    mascot.src = 'assets/happy.png';
+    mascot.alt = '醒来的小理';
+    trigger.classList.remove('waking');
+    trigger.classList.add('woken');
+    trigger.setAttribute('aria-label','小理已经醒来');
+    trigger.setAttribute('aria-pressed','true');
+    if(copy){
+      copy.textContent = '您已唤醒小理，快去开始规划吧';
+      requestAnimationFrame(()=>copy.classList.remove('changing'));
+    }
+  }, 180);
+}
+function dropEmptyMascotCoins(){
+  const coinsWrap = document.getElementById('empty-mascot-coins');
+  if(!coinsWrap) return;
+  for(let i=0;i<7;i++){
+    const coin = document.createElement('span');
+    coin.className = 'empty-coin';
+    coin.style.setProperty('--x', (10 + Math.random()*136).toFixed(1)+'px');
+    coin.style.setProperty('--drift', (Math.random()*26-13).toFixed(1)+'px');
+    coin.style.setProperty('--duration', (920 + Math.random()*260).toFixed(0)+'ms');
+    coin.style.setProperty('--delay', (Math.random()*110).toFixed(0)+'ms');
+    coinsWrap.appendChild(coin);
+    setTimeout(()=>coin.remove(), 1500);
+  }
+}
+function speakWithEmptyMascot(){
+  const trigger = document.getElementById('empty-mascot-trigger');
+  const copy = document.getElementById('empty-state-copy');
+  if(!trigger || !copy) return;
+  let phraseIndex = Math.floor(Math.random()*EMPTY_MASCOT_PHRASES.length);
+  if(EMPTY_MASCOT_PHRASES.length > 1 && phraseIndex === emptyMascotLastPhrase){
+    phraseIndex = (phraseIndex + 1) % EMPTY_MASCOT_PHRASES.length;
+  }
+  emptyMascotLastPhrase = phraseIndex;
+  const phrase = EMPTY_MASCOT_PHRASES[phraseIndex];
+  const token = ++emptyMascotSpeakToken;
+  clearTimeout(emptyMascotTapTimer);
+  clearInterval(emptyMascotTypingTimer);
+  clearInterval(emptyMascotCoinTimer);
+  dropEmptyMascotCoins();
+  emptyMascotCoinTimer = setInterval(dropEmptyMascotCoins, 360);
+  trigger.classList.remove('talking');
+  requestAnimationFrame(()=>trigger.classList.add('talking'));
+  setTimeout(()=>trigger.classList.remove('talking'), 460);
+  copy.classList.add('changing');
+  setTimeout(()=>{
+    if(token !== emptyMascotSpeakToken) return;
+    copy.textContent = '';
+    copy.classList.remove('changing');
+    let charIndex = 0;
+    emptyMascotTypingTimer = setInterval(()=>{
+      if(token !== emptyMascotSpeakToken){ clearInterval(emptyMascotTypingTimer); return; }
+      copy.textContent += phrase.charAt(charIndex++);
+      if(charIndex >= phrase.length){
+        clearInterval(emptyMascotTypingTimer);
+        clearInterval(emptyMascotCoinTimer);
+        emptyMascotCoinTimer = null;
+      }
+    }, 64);
+  }, 150);
+}
+function handleEmptyMascotInteraction(){
+  if(emptyMascotWoken) speakWithEmptyMascot();
+  else wakeEmptyMascot();
+}
+function startEmptyMascotPress(){
+  clearTimeout(emptyMascotPressTimer);
+  emptyMascotLongPressTriggered = false;
+  emptyMascotPressTimer = setTimeout(()=>{
+    emptyMascotLongPressTriggered = true;
+    handleEmptyMascotInteraction();
+  }, 520);
+}
+function endEmptyMascotPress(){
+  clearTimeout(emptyMascotPressTimer);
+  emptyMascotPressTimer = null;
+}
+const emptyMascotTrigger = document.getElementById('empty-mascot-trigger');
+emptyMascotTrigger.addEventListener('pointerdown', startEmptyMascotPress);
+emptyMascotTrigger.addEventListener('pointerup', endEmptyMascotPress);
+emptyMascotTrigger.addEventListener('pointercancel', endEmptyMascotPress);
+emptyMascotTrigger.addEventListener('pointerleave', endEmptyMascotPress);
+emptyMascotTrigger.addEventListener('click', ()=>{
+  if(emptyMascotLongPressTriggered){ emptyMascotLongPressTriggered = false; return; }
+  clearTimeout(emptyMascotTapTimer);
+  emptyMascotTapTimer = setTimeout(handleEmptyMascotInteraction, 240);
+});
+emptyMascotTrigger.addEventListener('dblclick', ()=>{
+  clearTimeout(emptyMascotTapTimer);
+  handleEmptyMascotInteraction();
+});
+emptyMascotTrigger.addEventListener('keydown', e=>{
+  if(e.key==='Enter' || e.key===' '){ e.preventDefault(); handleEmptyMascotInteraction(); }
+});
+// 我的页面「重新测一测」入口（需求5）
+document.getElementById('btn-retake').addEventListener('click', ()=> startSurvey('retake'));
+</script>
+</body>
+</html>
